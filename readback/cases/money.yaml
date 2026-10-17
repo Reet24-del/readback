@@ -1,0 +1,102 @@
+# Indian-format currency. Derived accept forms cover "X rupees" / "rupees X" in both
+# Indian (lakh/crore) and international (thousand/million) readings.
+
+- id: money-001
+  category: money
+  text: "Your balance is ₹1,50,000."
+  critical: "₹1,50,000"
+  value: {type: amount, value: 150000, unit: INR}
+  severity: high
+  notes: "Reproduces BUG-001 (spoken as 'one fifty thousand rupees')."
+
+- id: money-002
+  category: money
+  text: "Your EMI of ₹12,499 is due on Friday."
+  critical: "₹12,499"
+  value: {type: amount, value: 12499, unit: INR}
+  severity: high
+
+- id: money-003
+  category: money
+  text: "A refund of ₹2.5 crore has been approved."
+  critical: "₹2.5 crore"
+  value: {type: amount, value: 25000000, unit: INR}
+  accept: ["two point five crore rupees", "rupees two point five crore"]
+  severity: high
+
+- id: money-004
+  category: money
+  text: "MRP Rs. 499/- inclusive of all taxes."
+  critical: "Rs. 499/-"
+  value: {type: amount, value: 499, unit: INR}
+  accept: ["rupees four ninety nine", "four ninety nine rupees"]
+  severity: high
+
+- id: money-005
+  category: money
+  text: "You have been pre-approved for a loan of ₹1.2L."
+  critical: "₹1.2L"
+  value: {type: amount, value: 120000, unit: INR}
+  accept: ["one point two lakh rupees", "rupees one point two lakh"]
+  severity: high
+
+- id: money-006
+  category: money
+  text: "₹10,00,000 has been debited from your account."
+  critical: "₹10,00,000"
+  value: {type: amount, value: 1000000, unit: INR}
+  severity: critical
+
+- id: money-007
+  category: money
+  text: "Pay ₹1,00,000 before 5 PM to avoid a penalty."
+  critical: "₹1,00,000"
+  value: {type: amount, value: 100000, unit: INR}
+  severity: high
+
+- id: money-008
+  category: money
+  text: "The fare is ₹75.50 per person."
+  critical: "₹75.50"
+  value: {type: amount, value: 75.5, unit: INR}
+  accept: ["seventy five rupees fifty paise", "seventy five rupees and fifty paise", "seventy five point five zero rupees", "rupees seventy five point five zero"]
+  severity: high
+
+- id: money-009
+  category: money
+  text: "Your account balance is ₹99,99,999."
+  critical: "₹99,99,999"
+  value: {type: amount, value: 9999999, unit: INR}
+  severity: high
+
+- id: money-010
+  category: money
+  text: "Total payable: ₹3,45,67,890."
+  critical: "₹3,45,67,890"
+  value: {type: amount, value: 34567890, unit: INR}
+  severity: high
+
+- id: money-011
+  category: money
+  text: "The security deposit is INR 50,000."
+  critical: "INR 50,000"
+  value: {type: amount, value: 50000, unit: INR}
+  accept: ["i n r fifty thousand", "inr fifty thousand"]
+  severity: high
+
+- id: money-012
+  category: money
+  text: "Cashback of ₹0.75 has been credited."
+  critical: "₹0.75"
+  value: {type: amount, value: 0.75, unit: INR}
+  accept: ["seventy five paise", "zero point seven five rupees", "rupees zero point seven five"]
+  severity: low
+
+- id: money-013
+  category: money
+  text: "Your bill comes to $1,250.00."
+  critical: "$1,250.00"
+  value: {type: amount, value: 1250, unit: USD}
+  accept: ["twelve hundred fifty dollars", "twelve hundred and fifty dollars", "one thousand two hundred fifty dollars"]
+  severity: low
+  notes: "International-format control for the money suite."

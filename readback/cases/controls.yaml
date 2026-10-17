@@ -1,0 +1,37 @@
+# Controls: easy cases any TTS and STT get right. If one fails, the test setup is broken;
+# fix that before trusting any other result.
+
+- id: ctl-001
+  category: controls
+  text: "The number is twenty five."
+  critical: "twenty five"
+  value: {type: number, value: 25}
+  severity: low
+
+- id: ctl-002
+  category: controls
+  text: "I have 3 apples."
+  critical: "3"
+  value: {type: number, value: 3}
+  severity: low
+
+- id: ctl-003
+  category: controls
+  text: "It costs 10 dollars."
+  critical: "10 dollars"
+  value: {type: amount, value: 10, unit: USD}
+  severity: low
+
+- id: ctl-004
+  category: controls
+  text: "Call me at five."
+  critical: "five"
+  value: {type: number, value: 5}
+  severity: low
+
+- id: ctl-005
+  category: controls
+  text: "Turn to page 42 of the report."
+  critical: "42"
+  value: {type: number, value: 42}
+  severity: low

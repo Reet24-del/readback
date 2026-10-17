@@ -1,0 +1,77 @@
+# Phone numbers. Scored on the digit-string reading, so "double five" and
+# "ninety eight" groupings both count as long as the digits come out right.
+
+- id: phone-001
+  category: phone
+  text: "Call +91 98765 43210 for support."
+  critical: "+91 98765 43210"
+  value: {type: digits, digits: "919876543210"}
+  accept: ["plus nine one nine eight seven six five four three two one zero"]
+  severity: high
+
+- id: phone-002
+  category: phone
+  text: "Our office number is 022-2345 6789."
+  critical: "022-2345 6789"
+  value: {type: digits, digits: "02223456789"}
+  severity: high
+
+- id: phone-003
+  category: phone
+  text: "Toll-free: 1800-123-4567."
+  critical: "1800-123-4567"
+  value: {type: digits, digits: "18001234567"}
+  accept: ["one eight hundred one two three four five six seven", "eighteen hundred one two three four five six seven"]
+  severity: high
+
+- id: phone-004
+  category: phone
+  text: "Dial 112 in an emergency."
+  critical: "112"
+  value: {type: digits, digits: "112"}
+  severity: critical
+  notes: "India's emergency number. 'One hundred twelve' is wrong for a phone number."
+
+- id: phone-005
+  category: phone
+  text: "WhatsApp us at +91-90000-00001."
+  critical: "+91-90000-00001"
+  value: {type: digits, digits: "919000000001"}
+  severity: high
+
+- id: phone-006
+  category: phone
+  text: "Give a missed call to 0124 456 7890."
+  critical: "0124 456 7890"
+  value: {type: digits, digits: "01244567890"}
+  severity: high
+
+- id: phone-007
+  category: phone
+  text: "Call 9988776655 now."
+  critical: "9988776655"
+  value: {type: digits, digits: "9988776655"}
+  accept: ["double nine double eight double seven double six double five"]
+  severity: high
+  notes: "Unformatted 10-digit mobile; must not be read as a cardinal (nine billion...)."
+
+- id: phone-008
+  category: phone
+  text: "Customer care: (080) 4567 8901."
+  critical: "(080) 4567 8901"
+  value: {type: digits, digits: "08045678901"}
+  severity: high
+
+- id: phone-009
+  category: phone
+  text: "Reach me on 98200 12345 after six."
+  critical: "98200 12345"
+  value: {type: digits, digits: "9820012345"}
+  severity: high
+
+- id: phone-010
+  category: phone
+  text: "Helpline 1800 425 1111 is open all day."
+  critical: "1800 425 1111"
+  value: {type: digits, digits: "18004251111"}
+  severity: high

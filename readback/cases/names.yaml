@@ -1,0 +1,84 @@
+# Indian names, places, addresses and Hinglish. Scored by fuzzy match, since
+# pronunciation varies; these surface abbreviation bugs ("St.", "Dr.", "Rd.") more than accents.
+
+- id: name-001
+  category: names
+  text: "Your doctor today is Dr. Subramanian."
+  critical: "Dr. Subramanian"
+  value: {type: text, value: "Dr. Subramanian"}
+  accept: ["doctor subramanian"]
+  severity: low
+
+- id: name-002
+  category: names
+  text: "Your parcel is out for delivery in Thiruvananthapuram."
+  critical: "Thiruvananthapuram"
+  value: {type: text, value: "Thiruvananthapuram"}
+  accept: ["thiruvananthapuram"]
+  severity: low
+
+- id: name-003
+  category: names
+  text: "Hello Mr. Chattopadhyay, your order is ready."
+  critical: "Mr. Chattopadhyay"
+  value: {type: text, value: "Mr. Chattopadhyay"}
+  accept: ["mister chattopadhyay"]
+  severity: low
+
+- id: name-004
+  category: names
+  text: "Pickup from 12, MG Road, Bengaluru."
+  critical: "12, MG Road"
+  value: {type: text, value: "12, MG Road"}
+  accept: ["twelve m g road"]
+  severity: high
+
+- id: name-005
+  category: names
+  text: "Deliver to Flat 4B, Sai Krupa Apartments, Andheri West."
+  critical: "Flat 4B"
+  value: {type: text, value: "Flat 4B"}
+  accept: ["flat four b"]
+  severity: high
+
+- id: name-006
+  category: names
+  text: "Please meet Ms. Aishwarya at the counter."
+  critical: "Ms. Aishwarya"
+  value: {type: text, value: "Ms. Aishwarya"}
+  accept: ["miss aishwarya", "ms aishwarya", "m s aishwarya", "mizz aishwarya"]
+  severity: low
+
+- id: name-007
+  category: names
+  text: "Your package is at Sector 62, Noida."
+  critical: "Sector 62"
+  value: {type: text, value: "Sector 62"}
+  accept: ["sector sixty two"]
+  severity: high
+
+- id: name-008
+  category: names
+  text: "The clinic is on St. John's Road."
+  critical: "St. John's Road"
+  value: {type: text, value: "St. John's Road"}
+  accept: ["saint john's road", "saint johns road"]
+  severity: low
+  notes: "'Street John's Road' is the classic abbreviation bug."
+
+- id: name-009
+  category: names
+  text: "Turn left on Station Rd. after the temple."
+  critical: "Station Rd."
+  value: {type: text, value: "Station Rd."}
+  accept: ["station road"]
+  severity: low
+
+- id: name-010
+  category: names
+  text: "Aapka order kal tak aa jayega."
+  critical: "kal tak"
+  value: {type: text, value: "kal tak"}
+  accept: ["kal tak"]
+  severity: low
+  notes: "Romanised Hindi (Hinglish). No Indian voice exists, so this measures how far off an English voice gets."

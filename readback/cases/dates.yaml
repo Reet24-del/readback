@@ -1,0 +1,82 @@
+# Dates and times. India writes DD/MM/YYYY, so 03/04/2026 is 3 April, not March 4.
+
+- id: date-001
+  category: dates
+  text: "Your appointment is on 03/04/2026."
+  critical: "03/04/2026"
+  value: {type: date, day: 3, month: 4, year: 2026}
+  accept: ["third april twenty twenty six", "the third of april twenty twenty six", "three april twenty twenty six"]
+  severity: high
+  notes: "Reading it as 'March fourth' is the US interpretation and wrong for an Indian user."
+
+- id: date-002
+  category: dates
+  text: "Delivery expected by 12/11/2026."
+  critical: "12/11/2026"
+  value: {type: date, day: 12, month: 11, year: 2026}
+  accept: ["twelfth november twenty twenty six", "the twelfth of november twenty twenty six", "twelve november twenty twenty six"]
+  severity: high
+
+- id: date-003
+  category: dates
+  text: "Your policy expires on 31-12-2026."
+  critical: "31-12-2026"
+  value: {type: date, day: 31, month: 12, year: 2026}
+  accept: ["thirty first december twenty twenty six", "the thirty first of december twenty twenty six", "december thirty first twenty twenty six"]
+  severity: high
+
+- id: date-004
+  category: dates
+  text: "The exam is on 5 Jan 2027."
+  critical: "5 Jan 2027"
+  value: {type: date, day: 5, month: 1, year: 2027}
+  accept: ["fifth january twenty twenty seven", "five january twenty twenty seven", "the fifth of january twenty twenty seven", "january fifth twenty twenty seven"]
+  severity: high
+
+- id: date-005
+  category: dates
+  text: "Your train departs at 17:30 IST."
+  critical: "17:30"
+  value: {type: time, hour: 17, minute: 30}
+  accept: ["seventeen thirty", "five thirty p m", "five thirty in the evening", "half past five"]
+  severity: high
+
+- id: date-006
+  category: dates
+  text: "The meeting starts at 9:05 AM."
+  critical: "9:05 AM"
+  value: {type: time, hour: 9, minute: 5}
+  accept: ["nine oh five a m", "nine zero five a m", "five past nine"]
+  severity: high
+
+- id: date-007
+  category: dates
+  text: "The store opens at 10 a.m. sharp."
+  critical: "10 a.m."
+  value: {type: time, hour: 10, minute: 0}
+  accept: ["ten a m", "ten in the morning"]
+  severity: low
+
+- id: date-008
+  category: dates
+  text: "Date of birth: 01.02.1990."
+  critical: "01.02.1990"
+  value: {type: date, day: 1, month: 2, year: 1990}
+  accept: ["first february nineteen ninety", "the first of february nineteen ninety", "one february nineteen ninety"]
+  severity: high
+
+- id: date-009
+  category: dates
+  text: "This offer is valid till 2026-10-24."
+  critical: "2026-10-24"
+  value: {type: date, day: 24, month: 10, year: 2026}
+  accept: ["october twenty fourth twenty twenty six", "twenty fourth october twenty twenty six", "the twenty fourth of october twenty twenty six"]
+  severity: high
+
+- id: date-010
+  category: dates
+  text: "Check-in is from 14:00 hrs."
+  critical: "14:00 hrs"
+  value: {type: time, hour: 14, minute: 0}
+  accept: ["fourteen hundred hours", "two p m", "fourteen hundred hrs"]
+  severity: low

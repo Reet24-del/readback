@@ -1,0 +1,50 @@
+# Emails, UPI IDs and URLs: punctuation has to be spoken ("dot", "at", "underscore").
+
+- id: contact-001
+  category: contact
+  text: "Write to support@readback.in for help."
+  critical: "support@readback.in"
+  value: {type: email, address: "support@readback.in"}
+  accept: ["support at readback dot in"]
+  severity: high
+
+- id: contact-002
+  category: contact
+  text: "Send the documents to priya.sharma99@gmail.com today."
+  critical: "priya.sharma99@gmail.com"
+  value: {type: email, address: "priya.sharma99@gmail.com"}
+  accept: ["priya dot sharma ninety nine at gmail dot com", "priya dot sharma nine nine at gmail dot com"]
+  severity: high
+
+- id: contact-003
+  category: contact
+  text: "Contact rahul_k@company.co.in for the invoice."
+  critical: "rahul_k@company.co.in"
+  value: {type: email, address: "rahul_k@company.co.in"}
+  accept: ["rahul underscore k at company dot co dot in"]
+  severity: high
+
+- id: contact-004
+  category: contact
+  text: "Pay to UPI ID shop@okicici."
+  critical: "shop@okicici"
+  value: {type: email, address: "shop@okicici"}
+  accept: ["shop at okicici", "shop at ok icici", "shop at o k i c i c i"]
+  severity: critical
+  notes: "A misread UPI ID sends money to the wrong person."
+
+- id: contact-005
+  category: contact
+  text: "Visit www.example.in/pay for details."
+  critical: "www.example.in/pay"
+  value: {type: text, value: "www.example.in/pay"}
+  accept: ["w w w dot example dot in slash pay", "example dot in slash pay", "double u double u double u dot example dot in slash pay"]
+  severity: high
+
+- id: contact-006
+  category: contact
+  text: "My email is a.b-c@x.io if you need me."
+  critical: "a.b-c@x.io"
+  value: {type: email, address: "a.b-c@x.io"}
+  accept: ["a dot b dash c at x dot i o", "a dot b hyphen c at x dot i o", "a dot b dash c at x dot io"]
+  severity: high

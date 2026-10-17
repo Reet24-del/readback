@@ -1,0 +1,113 @@
+# Doses and Indian prescription shorthand. A wrong dose read aloud is the scariest
+# failure in the project, so most of these are severity: critical.
+
+- id: med-001
+  category: medical
+  text: "Take 0.5 mg of Clonazepam at night."
+  critical: "0.5 mg"
+  value: {type: dose, amount: 0.5, unit: mg}
+  severity: critical
+
+- id: med-002
+  category: medical
+  text: "Give 2.5 ml of paracetamol syrup every 6 hours."
+  critical: "2.5 ml"
+  value: {type: dose, amount: 2.5, unit: ml}
+  accept: ["two point five milliliters", "two and a half millilitres", "two and a half milliliters"]
+  severity: critical
+
+- id: med-003
+  category: medical
+  text: "Take ½ tab of Ecosprin after lunch."
+  critical: "½ tab"
+  value: {type: dose, amount: 0.5, unit: tab}
+  accept: ["half tab", "half a tab", "one half tab", "one half tablet"]
+  severity: critical
+
+- id: med-004
+  category: medical
+  text: "Dosage: 1-0-1 after food."
+  critical: "1-0-1"
+  value: {type: text, value: "1-0-1"}
+  accept: ["one zero one", "one oh one", "one dash zero dash one", "one hyphen zero hyphen one", "one in the morning and one at night"]
+  severity: high
+  notes: "Indian prescription notation: morning-afternoon-night. 'One hundred and one' or 'one to one' is wrong."
+
+- id: med-005
+  category: medical
+  text: "Metformin 500 mg BD."
+  critical: "500 mg"
+  value: {type: dose, amount: 500, unit: mg}
+  severity: critical
+
+- id: med-006
+  category: medical
+  text: "Take Metformin 500 mg BD."
+  critical: "BD"
+  value: {type: text, value: "BD"}
+  accept: ["b d", "twice daily", "twice a day"]
+  severity: high
+  notes: "BD = bis die (twice daily). 'Bd' read as a word, or as 'boulevard', is wrong."
+
+- id: med-007
+  category: medical
+  text: "Insulin: 10 IU before breakfast."
+  critical: "10 IU"
+  value: {type: dose, amount: 10, unit: iu}
+  accept: ["ten i u", "ten i. u."]
+  severity: critical
+
+- id: med-008
+  category: medical
+  text: "Vitamin D3 60,000 IU once a week."
+  critical: "60,000 IU"
+  value: {type: dose, amount: 60000, unit: iu}
+  accept: ["sixty thousand i u"]
+  severity: critical
+
+- id: med-009
+  category: medical
+  text: "Take one tablet of Thyronorm 25 mcg on an empty stomach."
+  critical: "25 mcg"
+  value: {type: dose, amount: 25, unit: mcg}
+  accept: ["twenty five m c g"]
+  severity: critical
+
+- id: med-010
+  category: medical
+  text: "Apply 2 drops in each eye, TDS."
+  critical: "TDS"
+  value: {type: text, value: "TDS"}
+  accept: ["t d s", "three times a day", "thrice daily", "three times daily"]
+  severity: high
+
+- id: med-011
+  category: medical
+  text: "Paracetamol 650 mg SOS for fever."
+  critical: "650 mg"
+  value: {type: dose, amount: 650, unit: mg}
+  accept: ["six fifty milligrams", "six fifty mg"]
+  severity: critical
+
+- id: med-012
+  category: medical
+  text: "Take 0.25 mg of Alprazolam at bedtime."
+  critical: "0.25 mg"
+  value: {type: dose, amount: 0.25, unit: mg}
+  accept: ["a quarter of a milligram", "quarter milligram"]
+  severity: critical
+
+- id: med-013
+  category: medical
+  text: "Inject 5,000 units of heparin."
+  critical: "5,000 units"
+  value: {type: dose, amount: 5000, unit: units}
+  severity: critical
+
+- id: med-014
+  category: medical
+  text: "Fasting blood sugar: 126 mg/dL."
+  critical: "126"
+  value: {type: number, value: 126}
+  accept: ["one twenty six"]
+  severity: high

@@ -1,0 +1,94 @@
+# Codes people read back or type in. All values are made up but follow the real formats.
+# Derived accept form for `code`: letter by letter, digits as words.
+
+- id: code-001
+  category: codes
+  text: "Your PNR is 4521367890."
+  critical: "4521367890"
+  value: {type: digits, digits: "4521367890"}
+  severity: high
+
+- id: code-002
+  category: codes
+  text: "Your OTP is 482910. Do not share it with anyone."
+  critical: "482910"
+  value: {type: digits, digits: "482910"}
+  severity: critical
+  notes: "Must be digit by digit, not 'four hundred eighty two thousand...'."
+
+- id: code-003
+  category: codes
+  text: "IFSC code: ABCD0123456."
+  critical: "ABCD0123456"
+  value: {type: code, chars: "ABCD0123456"}
+  accept: ["a b c d o one two three four five six"]
+  severity: high
+
+- id: code-004
+  category: codes
+  text: "PAN: ABCPK1234F."
+  critical: "ABCPK1234F"
+  value: {type: code, chars: "ABCPK1234F"}
+  severity: high
+
+- id: code-005
+  category: codes
+  text: "Vehicle MH12AB1234 is parked outside."
+  critical: "MH12AB1234"
+  value: {type: code, chars: "MH12AB1234"}
+  accept: ["m h twelve a b twelve thirty four"]
+  severity: high
+
+- id: code-006
+  category: codes
+  text: "Delivery pincode 110001."
+  critical: "110001"
+  value: {type: digits, digits: "110001"}
+  severity: high
+
+- id: code-007
+  category: codes
+  text: "Booking reference: X7K9QZ."
+  critical: "X7K9QZ"
+  value: {type: code, chars: "X7K9QZ"}
+  severity: high
+
+- id: code-008
+  category: codes
+  text: "Transaction ID 9F3A-77B2 failed."
+  critical: "9F3A-77B2"
+  value: {type: code, chars: "9F3A77B2"}
+  accept: ["nine f three a dash seven seven b two", "nine f three a double seven b two"]
+  severity: high
+
+- id: code-009
+  category: codes
+  text: "Flight AI 302 departs from Gate 4B."
+  critical: "AI 302"
+  value: {type: code, chars: "AI302"}
+  accept: ["a i three oh two", "air india three zero two", "air india three oh two"]
+  severity: high
+
+- id: code-010
+  category: codes
+  text: "Use promo code SAVE50 at checkout."
+  critical: "SAVE50"
+  value: {type: code, chars: "SAVE50"}
+  accept: ["save fifty", "save five zero"]
+  severity: low
+
+- id: code-011
+  category: codes
+  text: "GSTIN: 27ABCDE1234F1Z5."
+  critical: "27ABCDE1234F1Z5"
+  value: {type: code, chars: "27ABCDE1234F1Z5"}
+  accept: ["two seven a b c d e one two three four f one zed five"]
+  severity: high
+
+- id: code-012
+  category: codes
+  text: "Your gate is 4B, seat 23C."
+  critical: "23C"
+  value: {type: code, chars: "23C"}
+  accept: ["twenty three c"]
+  severity: low
