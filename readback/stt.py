@@ -7,13 +7,14 @@ Two independent passes, so a misread can be pinned on the TTS rather than the ST
 
 from __future__ import annotations
 
+import hashlib
 import json
 import time
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 
 import httpx
 
-from readback.config import api_key
+from readback.config import CACHE_DIR, api_key
 from readback.tts.base import Clip, Word
 
 API = "https://api.assemblyai.com/v2"
@@ -34,16 +35,36 @@ class Transcript:
     raw: dict = field(default_factory=dict, repr=False)
 
 
-def _request(method: str, url: str, *, attempts: int = 3, **kwargs) -> httpx.Response:
+def _request(method: str, url: str, *, attempts: int = 4, **kwargs) -> httpx.Response:
+    last = ""
     for i in range(attempts):
-        resp = httpx.request(method, url, timeout=60, **kwargs)
+        try:
+            resp = httpx.request(method, url, timeout=60, **kwargs)
+        except httpx.TransportError as e:  # TLS/connect timeouts are transient
+            last = f"{type(e).__name__}: {e}"
+            time.sleep(2**i)
+            continue
         if resp.status_code == 429 or resp.status_code >= 500:
+            last = f"{resp.status_code}: {resp.text[:300]}"
             time.sleep(2**i)
             continue
         if resp.status_code >= 400:
             raise STTError(f"{method} {url} -> {resp.status_code}: {resp.text[:300]}")
         return resp
-    raise STTError(f"{method} {url} kept failing ({resp.status_code}): {resp.text[:300]}")
+    raise STTError(f"{method} {url} kept failing ({last})")
+
+
+def cached_transcribe(pass_name: str, clip: Clip, use_cache: bool = True) -> dict:
+    """{"text", "words"} for one pass, cached by the audio's hash so re-runs never re-bill."""
+    wav = clip.to_wav_bytes()
+    path = CACHE_DIR / "stt" / f"{pass_name}-{hashlib.sha1(wav).hexdigest()}.json"
+    if use_cache and path.exists():
+        return json.loads(path.read_text())
+    t = {"verbatim": transcribe_verbatim, "formatted": transcribe_formatted}[pass_name](clip)
+    out = {"text": t.text, "words": [asdict(w) for w in t.words]}
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(out, ensure_ascii=False))
+    return out
 
 
 def transcribe_verbatim(clip: Clip, timeout_s: float = 120.0) -> Transcript:

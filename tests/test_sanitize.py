@@ -17,10 +17,29 @@ def test_zero_width_space_inside_number():
     assert kinds(r) == ["invisible"] and r.critical
 
 
-def test_rtl_override_is_critical():
-    r = sanitize("Account ‮4321")
-    assert r.text == "Account 4321"
+def test_rtl_override_is_laid_out_like_the_screen():
+    # The screen shows the overridden run reversed; speaking the logical order is the attack.
+    r = sanitize("You will be charged ₹‮005‬ today.")
+    assert r.text == "You will be charged ₹500 today."
     assert kinds(r) == ["bidi"] and r.critical
+
+
+def test_unclosed_rtl_override_runs_to_the_end():
+    r = sanitize("Account ‮4321")
+    assert r.text == "Account 1234" and r.critical
+
+
+def test_letter_o_inside_a_number():
+    r = sanitize("Your refund of ₹5О00 is ready.")  # Cyrillic O
+    assert r.text == "Your refund of ₹5000 is ready." and r.critical
+    assert sanitize("PNR 45213O7890").text == "PNR 4521307890"  # Latin O
+    assert sanitize("Call 1800 now. Order O1 is late.").text == "Call 1800 now. Order O1 is late."
+
+
+def test_markdown_emphasis_is_stripped():
+    r = sanitize("Your balance is **₹5,000**.")
+    assert r.text == "Your balance is ₹5,000." and "markup" in kinds(r)
+    assert sanitize("Contact rahul_k@company.co.in").text == "Contact rahul_k@company.co.in"
 
 
 def test_non_ascii_digits_become_ascii():

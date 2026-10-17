@@ -68,10 +68,10 @@ class Case:
 
     def accept_forms(self) -> list[str]:
         """Explicit accept forms plus the standard readings derived from `value`."""
-        return list(dict.fromkeys([*self.accept, *_derived_forms(self.value)]))
+        return list(dict.fromkeys([*self.accept, *derived_forms(self.value)]))
 
 
-def _derived_forms(v: dict) -> list[str]:
+def derived_forms(v: dict) -> list[str]:
     kind = v["type"]
     if kind in ("amount", "number"):
         n = v["value"]

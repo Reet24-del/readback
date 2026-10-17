@@ -12,33 +12,16 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-import hashlib
 import json
 import sys
 import time
-from dataclasses import asdict
 from pathlib import Path
 
 from readback import cases as case_lib
-from readback.config import CACHE_DIR, RUNS_DIR
+from readback.config import RUNS_DIR
 from readback.numparse import find_numbers
-from readback.stt import transcribe_formatted, transcribe_verbatim
-from readback.tts import DEFAULT_VOICES, ENGINES, Clip
-
-STT_CACHE = CACHE_DIR / "stt"
-STT_PASSES = {"verbatim": transcribe_verbatim, "formatted": transcribe_formatted}
-
-
-def cached_stt(pass_name: str, clip: Clip, use_cache: bool = True) -> dict:
-    wav = clip.to_wav_bytes()
-    path = STT_CACHE / f"{pass_name}-{hashlib.sha1(wav).hexdigest()}.json"
-    if use_cache and path.exists():
-        return json.loads(path.read_text())
-    t = STT_PASSES[pass_name](clip)
-    out = {"text": t.text, "words": [asdict(w) for w in t.words]}
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(out, ensure_ascii=False))
-    return out
+from readback.stt import cached_transcribe as cached_stt
+from readback.tts import DEFAULT_VOICES, ENGINES
 
 
 async def run_one(case: case_lib.Case, voice: str, engine, run_dir: Path, sem: asyncio.Semaphore, args) -> dict:
@@ -58,6 +41,8 @@ async def run_one(case: case_lib.Case, voice: str, engine, run_dir: Path, sem: a
     }
     async with sem:
         try:
+            if args.safespeak:
+                return await _run_safespeak(row, case, voice, engine, run_dir, args)
             clip = await engine.asynthesize(case.text, voice)
             wav = clip.save_wav(run_dir / "audio" / f"{case.id}--{voice}.wav")
             row.update(
@@ -85,6 +70,31 @@ async def run_one(case: case_lib.Case, voice: str, engine, run_dir: Path, sem: a
     return row
 
 
+async def _run_safespeak(row: dict, case: case_lib.Case, voice: str, engine, run_dir: Path, args) -> dict:
+    """Same case, but spoken through SafeSpeak; verbatim is what the final attempt sounded like."""
+    from readback.safespeak import speak
+
+    result = await speak(case.text, voice, engine, use_cache=not args.no_cache)
+    wav = result.clip.save_wav(run_dir / "audio" / f"{case.id}--{voice}.wav")
+    row.update(
+        wav=str(wav.relative_to(run_dir)),
+        duration_ms=result.clip.duration_ms,
+        engine_text=result.clip.engine_text,
+        tts_words=result.clip.words_as_dicts(),
+        verbatim=result.heard,
+        formatted=None,
+        numbers=[{"text": n.text, "value": n.value, "digits": n.digits, "ordinal": n.ordinal} for n in find_numbers(result.heard)],
+        safespeak={
+            "status": result.status,
+            "spoken_text": result.plan.spoken_text,
+            "sanitized": result.plan.sanitized.text,
+            "alerts": result.alerts,
+            "attempts": result.attempts,
+        },
+    )
+    return row
+
+
 async def run(args) -> dict:
     selected = case_lib.load(args.suite.split(","))
     if args.ids:
@@ -100,7 +110,7 @@ async def run(args) -> dict:
         raise SystemExit("nothing to run")
 
     engine = ENGINES[args.engine](use_cache=not args.no_cache)
-    run_dir = RUNS_DIR / f"{time.strftime('%Y%m%d-%H%M%S')}-{engine.name}"
+    run_dir = RUNS_DIR / f"{time.strftime('%Y%m%d-%H%M%S')}-{engine.name}{'-safespeak' if args.safespeak else ''}"
     run_dir.mkdir(parents=True)
     manifest = {
         "engine": engine.name,
@@ -108,6 +118,7 @@ async def run(args) -> dict:
         "voices": voices,
         "cases": len(selected),
         "jobs": len(jobs),
+        "safespeak": args.safespeak,
         "started": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
     }
     print(f"{len(selected)} cases × {len(voices)} voices = {len(jobs)} jobs -> {run_dir.relative_to(RUNS_DIR.parent)}")
@@ -125,7 +136,7 @@ async def run(args) -> dict:
                 heard = f"ERROR {row['error'][:90]}"
             else:
                 heard = repr(row.get("verbatim", row.get("engine_text", "")))[:90]
-            print(f"[{i:>3}/{len(jobs)}] {row['case_id']:<16} {row['voice']:<8} {heard}")
+            print(f"[{i:>3}/{len(jobs)}] {row['case_id']:<16} {row['voice']:<8} {heard}", flush=True)
 
     manifest.update(finished=time.strftime("%Y-%m-%dT%H:%M:%S%z"), errors=errors)
     (run_dir / "run.json").write_text(json.dumps(manifest, indent=2))
@@ -146,6 +157,7 @@ def main() -> None:
     p.add_argument("--limit", type=int, help="run only the first N cases")
     p.add_argument("--concurrency", type=int, default=4)
     p.add_argument("--skip-stt", action="store_true", help="synthesize only")
+    p.add_argument("--safespeak", action="store_true", help="speak every case through SafeSpeak (sanitize, spell out, verify)")
     p.add_argument("--no-cache", action="store_true", help="ignore cached TTS/STT results")
     args = p.parse_args()
     manifest = asyncio.run(run(args))

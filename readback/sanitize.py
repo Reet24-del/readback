@@ -59,6 +59,24 @@ def _cp(ch: str) -> str:
     return f"U+{ord(ch):04X} {unicodedata.name(ch, '?')}"
 
 
+_OVERRIDE = re.compile("([‭‮])(.*?)(‬|$)", re.S)
+
+
+def _apply_overrides(text: str, findings: list[Finding]) -> str:
+    """Lay out bidi overrides the way a screen does, so we speak what the user sees.
+
+    U+202E (RLO) shows everything up to U+202C (PDF) right-to-left, so "‮005‬"
+    is displayed as "500". Reading the logical order instead is the attack.
+    """
+
+    def visual(m: re.Match) -> str:
+        mark, body = m.group(1), m.group(2)
+        findings.append(Finding("bidi", "critical", _cp(mark), f"{body!r} is displayed as {body[::-1] if mark == '‮' else body!r}"))
+        return body[::-1] if mark == "‮" else body
+
+    return _OVERRIDE.sub(visual, text)
+
+
 def _strip_format_chars(text: str, findings: list[Finding]) -> str:
     out = []
     for i, ch in enumerate(text):
@@ -130,18 +148,40 @@ def _normalize_compat(text: str, findings: list[Finding]) -> str:
     return "".join(out)
 
 
+_LETTER_IN_NUMBER = re.compile(r"(?<=\d)([OolI])(?=[OolI]*\d)")
+_EMPHASIS = re.compile(r"(\*\*|__|\*|_|~~|`)(?=\S)(.+?)(?<=\S)\1")
+
+
+def _letters_in_numbers(text: str, findings: list[Finding]) -> str:
+    """"₹5O00" with a letter O (or l/I for 1) between digits is displayed as a number: say it as one."""
+
+    def fix(m: re.Match) -> str:
+        digit = "0" if m.group(1) in "Oo" else "1"
+        findings.append(Finding("confusable", "critical", m.group(1), f"letter {m.group(1)!r} inside a number, read as {digit}"))
+        return digit
+
+    return _LETTER_IN_NUMBER.sub(fix, text)
+
+
 def _strip_markup(text: str, findings: list[Finding]) -> str:
     for m in _TAG.finditer(text):
         findings.append(Finding("markup", "warning", m.group(), "markup tag in plain text"))
-    return _TAG.sub("", text)
+    text = _TAG.sub("", text)
+    for m in _EMPHASIS.finditer(text):
+        if m.group(1) in ("_", "__") and re.search(r"\w_|_\w", m.group()):
+            continue  # snake_case and emails like rahul_k@ are not emphasis
+        findings.append(Finding("markup", "warning", m.group(1), "markdown emphasis in plain text"))
+    return _EMPHASIS.sub(lambda m: m.group() if m.group(1) in ("_", "__") and re.search(r"\w_|_\w", m.group()) else m.group(2), text)
 
 
 def sanitize(text: str) -> SanitizeResult:
     findings: list[Finding] = []
-    s = _strip_format_chars(text, findings)
+    s = _apply_overrides(text, findings)
+    s = _strip_format_chars(s, findings)
     s = _ascii_digits(s, findings)
     s = _unconfuse(s, findings)
     s = _normalize_compat(s, findings)
+    s = _letters_in_numbers(s, findings)
     s = _strip_markup(s, findings)
     s = re.sub(r"[ \t]{2,}", " ", s).strip()
     return SanitizeResult(text, s, findings)
