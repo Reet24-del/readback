@@ -352,6 +352,31 @@ def verify(plan: Plan, said: str, heard: str, fallback: set[int]) -> dict[int, o
     return verdicts
 
 
+def check_raw(plan: Plan, heard: str) -> list[dict]:
+    """Score plain TTS output (no SafeSpeak) against the values SafeSpeak found in the text."""
+    from readback.score import score_row
+
+    checks = []
+    for e in plan.entities:
+        if e.value is None:
+            continue
+        row = {"text": plan.sanitized.text, "critical": e.original, "value": e.value, "accept": [e.spoken, *derived_forms(e.value)], "verbatim": heard, "error": None}
+        v = score_row(row, use_llm=False)
+        checks.append({"value": e.original, "status": v.status, "reason": v.reason})
+    return checks
+
+
+async def speak_raw(text: str, voice: str = "anna", engine=None, use_cache: bool = True) -> tuple[object, str, list[dict]]:
+    """Plain TTS, for comparison: (clip, what was heard, a check per value)."""
+    from readback.stt import cached_transcribe
+    from readback.tts import VoiceAgentTTS
+
+    engine = engine or VoiceAgentTTS(use_cache=use_cache)
+    clip = await engine.asynthesize(text, voice)
+    heard = (await asyncio.to_thread(cached_transcribe, "verbatim", clip, use_cache))["text"]
+    return clip, heard, check_raw(prepare(text), heard)
+
+
 async def speak(text: str, voice: str = "anna", engine=None, use_cache: bool = True) -> SafeResult:
     from readback.stt import cached_transcribe
     from readback.tts import VoiceAgentTTS

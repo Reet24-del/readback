@@ -4,3 +4,5 @@ python-dotenv>=1.0
 pyyaml>=6.0
 rapidfuzz>=3.9
 pytest>=8.0
+streamlit>=1.40
+pandas>=2.2

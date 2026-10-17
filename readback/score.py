@@ -75,11 +75,19 @@ def aligned_span(row: dict, spans: list[NumberSpan]) -> NumberSpan | None:
 def check_number(row: dict, heard: str) -> Verdict:
     want = row["value"]["value"]
     spans = find_numbers(heard)
+    if not any(_eq(x.value, want) for x in spans):
+        # "two point five rupees crore": right number, currency word in the wrong place.
+        without_cur = re.sub(r"\b(rupees?|dollars?|rs)\b", " ", heard, flags=re.I)
+        if any(_eq(x.value, want) for x in find_numbers(without_cur)):
+            return Verdict(UNCLEAR, "value", f"the value {_fmt(want)} is there, but the currency word is in the wrong place")
     s = aligned_span(row, spans)
     if s is None:
         if any(_eq(x.value, want) for x in spans):
             return Verdict(PASS, "value", f"heard {_fmt(want)}")
-        return Verdict(UNCLEAR, "value", "could not line up the spoken numbers with the written ones")
+        if spans:  # accepted readings already failed, and no spoken number equals the value
+            heard_nums = ", ".join(repr(x.text) for x in spans)
+            return Verdict(FAIL, "value", f"no spoken number equals {_fmt(want)} (heard {heard_nums})", spans[0].text)
+        return Verdict(UNCLEAR, "value", "no numbers were spoken")
     if _eq(s.value, want):
         return Verdict(PASS, "value", f"heard {_fmt(want)}", s.text)
     if s.value is None:
@@ -128,7 +136,10 @@ def check_digits(row: dict, heard: str) -> Verdict:
         return Verdict(PASS, "digits", f"heard {want} across {len(spans)} groups")
     if s is not None:
         return Verdict(FAIL, "digits", f"heard {s.digits or s.text!r}, expected {want}", s.text)
-    return Verdict(UNCLEAR, "digits", "could not line up the spoken digits with the written ones")
+    if spans:
+        heard_nums = ", ".join(repr(x.text) for x in spans)
+        return Verdict(FAIL, "digits", f"the digits {want} were never spoken in order (heard {heard_nums})", spans[0].text)
+    return Verdict(UNCLEAR, "digits", "no numbers were spoken")
 
 
 LETTER_NAMES = {
@@ -327,6 +338,8 @@ def score_row(row: dict, use_llm: bool = True) -> Verdict:
     heard = row.get("verbatim")
     if heard is None:
         return Verdict(UNCLEAR, "none", "no transcript (the run used --skip-stt)")
+    if row["value"].get("unit") == "INR":
+        heard = re.sub(r"\b(?:pays|paisa|pice)\b", "paise", heard, flags=re.I)  # common STT spellings of "paise"
     H = tokens(heard)
     for a in row["accept"]:
         if has_phrase(H, tokens(a)):
