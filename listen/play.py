@@ -1,14 +1,14 @@
 """Play each flagged case twice: plain TTS, then SafeSpeak.
 
-    .venv/bin/python listen/play.py        # all 13 pairs
-    .venv/bin/python listen/play.py 7      # start at pair 7
-
-Enter = next pair, r = replay this pair, q = quit.
+    .venv/bin/python listen/play.py --auto  # all 13 pairs, no key presses needed
+    .venv/bin/python listen/play.py         # step through: Enter = next pair, r = replay, q = quit
+    .venv/bin/python listen/play.py 7       # start at pair 7 (works with --auto too)
 """
 
 import json
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 HERE = Path(__file__).parent
@@ -25,8 +25,9 @@ def play(path: Path) -> None:
 
 def main() -> None:
     pairs = json.loads((HERE / "pairs.json").read_text())
-    start = int(sys.argv[1]) if len(sys.argv) > 1 else 1
-    i = start - 1
+    auto = "--auto" in sys.argv
+    numbers = [a for a in sys.argv[1:] if a.isdigit()]
+    i = int(numbers[0]) - 1 if numbers else 0
     while 0 <= i < len(pairs):
         p = pairs[i]
         print(f"\n{'─' * 72}\n{p['n']:>2}/{len(pairs)}  {p['bug']}  ·  {p['case']}  ·  voice {p['voice']}")
@@ -37,6 +38,10 @@ def main() -> None:
         print(f"   SafeSpeak said:   {p['safe_said']}")
         print("   ▶ playing SAFESPEAK…", flush=True)
         play(HERE / f"{p['stem']}-2-safespeak.wav")
+        if auto:
+            time.sleep(2)
+            i += 1
+            continue
         answer = input("   Enter = next · r = replay · q = quit: ").strip().lower()
         if answer == "q":
             break
@@ -46,4 +51,7 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except (KeyboardInterrupt, EOFError):
+        print("\nStopped.")
