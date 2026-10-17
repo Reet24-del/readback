@@ -32,7 +32,7 @@ Clips + full table: [link to repo]/findings/BUG-001.md
 • (080) 4567 8901 → "eighty four thousand five hundred sixty seven eight thousand nine hundred one"
 • +91-90000-00001 → "plus ninety one minus ninety thousand minus one"
 
-9/9 OTPs, 5/5 PNRs and 5/5 pincodes were affected. `+91 98765 43210` was read correctly.
+27/27 OTPs, 15/15 PNRs and 15/15 pincodes were affected across three voices. `+91 98765 43210` was read correctly.
 Details: [link]/findings/BUG-002.md
 
 ---
@@ -54,7 +54,7 @@ Details: [link]/findings/BUG-003.md
 • `<sub alias="fifty thousand rupees">₹5</sub>` shows "₹5" in an HTML UI but is spoken "sub alias fifty thousand rupees"
 • Word joiners inside an OTP drop its last two digits
 • A zero-width space in ₹10000 → "ten rupees zero"
-15/21 attack cases diverge. I'd suggest stripping Unicode format characters and either supporting or escaping SSML-like markup in `greeting`.
+43/63 attack results diverge across three voices. I'd suggest stripping Unicode format characters and either supporting or escaping SSML-like markup in `greeting`.
 Details + mitigation: [link]/findings/BUG-005.md
 
 ---
@@ -63,11 +63,11 @@ Details + mitigation: [link]/findings/BUG-005.md
 
 **Readback: does the TTS say exactly what's written?**
 
-Readback stress-tests AssemblyAI's TTS on the things Indian voice agents read out every day: lakh/crore amounts, OTPs, PNRs, doses, DD/MM dates, and hidden-character attacks. It speaks 173 cases, transcribes them back with Universal (`format_text=false`), and scores every critical value automatically.
+Readback stress-tests AssemblyAI's TTS on the things Indian voice agents read out every day: lakh/crore amounts, OTPs, PNRs, doses, DD/MM dates, and hidden-character attacks. It speaks 173 cases on three voices, transcribes them back with Universal (`format_text=false`), and scores every critical value automatically.
 
 • Found 5 bugs: Indian digit grouping, codes read as amounts, DD/MM dates, letter codes read as words (unconfirmed), and display/speech divergence attacks
-• 43 of the 76 misreads would be invisible to a formatted-STT check
-• **SafeSpeak**, a drop-in layer, makes the text match what the screen shows, spells every value out in plain words, verifies the audio and refuses when it can't verify: 52% → 98% correct, with 0 misreads (76 before)
+• 128 of the 230 misreads would be invisible to a formatted-STT check
+• **SafeSpeak**, a drop-in layer, makes the text match what the screen shows, spells every value out in plain words, verifies the audio and refuses when it can't verify: 53% → 99% correct across three voices, with 0 misreads (230 before)
 • Streamlit dashboard with ear-check workflow, attack table, before/after, and a live side-by-side demo
 
 Repo: [link] · Demo: [video link]

@@ -163,15 +163,25 @@ def _letters_in_numbers(text: str, findings: list[Finding]) -> str:
     return _LETTER_IN_NUMBER.sub(fix, text)
 
 
+def _is_identifier_underscore(m: re.Match) -> bool:
+    """snake_case and emails like rahul_k@ are not emphasis."""
+    return m.group(1) in ("_", "__") and bool(re.search(r"\w_|_\w", m.group()))
+
+
 def _strip_markup(text: str, findings: list[Finding]) -> str:
-    for m in _TAG.finditer(text):
-        findings.append(Finding("markup", "warning", m.group(), "markup tag in plain text"))
-    text = _TAG.sub("", text)
-    for m in _EMPHASIS.finditer(text):
-        if m.group(1) in ("_", "__") and re.search(r"\w_|_\w", m.group()):
-            continue  # snake_case and emails like rahul_k@ are not emphasis
-        findings.append(Finding("markup", "warning", m.group(1), "markdown emphasis in plain text"))
-    return _EMPHASIS.sub(lambda m: m.group() if m.group(1) in ("_", "__") and re.search(r"\w_|_\w", m.group()) else m.group(2), text)
+    # Repeat until stable: "<<b>b>" and "***x***" only reveal their inner layer once the outer one is gone.
+    for _ in range(10):
+        before = text
+        for m in _TAG.finditer(text):
+            findings.append(Finding("markup", "warning", m.group(), "markup tag in plain text"))
+        text = _TAG.sub("", text)
+        for m in _EMPHASIS.finditer(text):
+            if not _is_identifier_underscore(m):
+                findings.append(Finding("markup", "warning", m.group(1), "markdown emphasis in plain text"))
+        text = _EMPHASIS.sub(lambda m: m.group() if _is_identifier_underscore(m) else m.group(2), text)
+        if text == before:
+            break
+    return text
 
 
 def sanitize(text: str) -> SanitizeResult:

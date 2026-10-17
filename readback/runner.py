@@ -96,7 +96,10 @@ async def _run_safespeak(row: dict, case: case_lib.Case, voice: str, engine, run
 
 
 async def run(args) -> dict:
-    selected = case_lib.load(args.suite.split(","))
+    try:
+        selected = case_lib.load(args.suite.split(","))
+    except case_lib.CaseError as e:
+        raise SystemExit(str(e)) from None
     if args.ids:
         wanted = set(args.ids.split(","))
         selected = [c for c in selected if c.id in wanted]
@@ -140,10 +143,11 @@ async def run(args) -> dict:
 
     manifest.update(finished=time.strftime("%Y-%m-%dT%H:%M:%S%z"), errors=errors)
     (run_dir / "run.json").write_text(json.dumps(manifest, indent=2))
-    latest = RUNS_DIR / "latest"
-    if latest.is_symlink() or latest.exists():
-        latest.unlink()
-    latest.symlink_to(run_dir.name)
+    if errors < len(jobs):  # a run where everything failed must not become the default for score/dashboard
+        latest = RUNS_DIR / "latest"
+        if latest.is_symlink() or latest.exists():
+            latest.unlink()
+        latest.symlink_to(run_dir.name)
     print(f"\ndone: {len(jobs) - errors} ok, {errors} errors -> {run_dir.relative_to(RUNS_DIR.parent)}/results.jsonl")
     return manifest
 

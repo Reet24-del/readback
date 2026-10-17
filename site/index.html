@@ -144,8 +144,8 @@ footer { color: var(--muted); font-size: .85rem; border-top: 1px solid var(--rul
       <div class="line"><span class="label">Voice said</span><span class="value"><span class="wrong">ten zero rupees</span> · <span class="wrong">March fourth</span></span></div>
       <div class="line"><span class="label">SafeSpeak said</span><span class="value right">ten lakh rupees · the third of April</span></div>
       <div class="plays">
-        <button class="play bad" data-src="audio/hero-plain.m4a" aria-pressed="false"><span class="dot" aria-hidden="true">▶</span>Plain TTS</button>
-        <button class="play good" data-src="audio/hero-safe.m4a" aria-pressed="false"><span class="dot" aria-hidden="true">▶</span>With SafeSpeak</button>
+        <button class="play bad" data-src="audio/hero-plain.mp4" aria-pressed="false"><span class="dot" aria-hidden="true">▶</span>Plain TTS</button>
+        <button class="play good" data-src="audio/hero-safe.mp4" aria-pressed="false"><span class="dot" aria-hidden="true">▶</span>With SafeSpeak</button>
       </div>
     </div>
     <div class="stamp" aria-hidden="true">MISREAD</div>
@@ -155,12 +155,12 @@ footer { color: var(--muted); font-size: .85rem; border-top: 1px solid var(--rul
   <section aria-labelledby="results">
     <div class="eyebrow">Results</div>
     <h2 id="results">Half the critical values came out wrong. SafeSpeak brings misreads to zero.</h2>
-    <p data-fill="scope">173 cases (152 everyday messages and 21 attacks) on voice <span class="mono">anna</span>, scored on a word-for-word transcript of the audio.</p>
+    <p data-fill="scope">173 cases (152 everyday messages and 21 attacks) on three voices, <span class="mono">anna</span>, <span class="mono">alba</span> and <span class="mono">george</span>: 519 results, each scored on a word-for-word transcript of the audio.</p>
     <div class="big">
-      <div class="from"><strong data-fill="before">52%</strong><span>correct with plain TTS</span></div>
-      <div class="to"><strong data-fill="after">98%</strong><span>correct or safely held back, with SafeSpeak</span></div>
-      <div class="from"><strong data-fill="misreads">76 → 0</strong><span>critical values misread</span></div>
-      <div><strong data-fill="hidden">43</strong><span>misreads a formatted transcript would have hidden</span></div>
+      <div class="from"><strong data-fill="before">53%</strong><span>correct with plain TTS</span></div>
+      <div class="to"><strong data-fill="after">99%</strong><span>correct or safely held back, with SafeSpeak</span></div>
+      <div class="from"><strong data-fill="misreads">230 → 0</strong><span>critical values misread</span></div>
+      <div><strong data-fill="hidden">128</strong><span>misreads a formatted transcript would have hidden</span></div>
     </div>
     <div class="legend"><span><i style="background:var(--stamp)"></i>Plain TTS</span><span><i style="background:var(--ok)"></i>With SafeSpeak</span></div>
     <div class="bars" id="bars"></div>
@@ -176,18 +176,18 @@ footer { color: var(--muted); font-size: .85rem; border-top: 1px solid var(--rul
         <div class="body">
           <h3>Indian digit grouping is misread on every voice</h3>
           <div class="pair"><b>₹10,00,000</b> → "ten zero rupees" · <b>₹1,50,000</b> → "one fifty thousand rupees"</div>
-          <p data-fill="bug1">Every amount of a lakh or more written with Indian commas (30 of 30 across three voices). The same amount written ₹150,000 is read correctly.</p>
+          <p data-fill="bug1">Every amount of a lakh or more written with Indian commas (72 of 72 across three voices). The same amount written ₹150,000 is read correctly.</p>
         </div>
-        <div class="side"><span class="chip crit">critical</span><button class="play bad" data-src="audio/bug1.m4a" aria-pressed="false"><span class="dot" aria-hidden="true">▶</span>Listen</button></div>
+        <div class="side"><span class="chip crit">critical</span><button class="play bad" data-src="audio/bug1.mp4" aria-pressed="false"><span class="dot" aria-hidden="true">▶</span>Listen</button></div>
       </div>
       <div class="bug">
         <span class="id">BUG-002</span>
         <div class="body">
           <h3>OTPs, PNRs and pincodes are read as amounts</h3>
           <div class="pair"><b>OTP 482910</b> → "four hundred eighty two thousand nine hundred ten" · <b>PNR 4521367890</b> → "four billion…"</div>
-          <p>All 9 OTPs, 5 PNRs and 5 pincodes. Hyphens in phone numbers become "minus". Leading zeros vanish, so <span class="mono">033705</span> becomes a different code.</p>
+          <p>Every OTP, PNR and pincode, on all three voices. Hyphens in phone numbers become "minus". Leading zeros vanish, so <span class="mono">033705</span> becomes a different code.</p>
         </div>
-        <div class="side"><span class="chip crit">critical</span><button class="play bad" data-src="audio/bug2.m4a" aria-pressed="false"><span class="dot" aria-hidden="true">▶</span>Listen</button></div>
+        <div class="side"><span class="chip crit">critical</span><button class="play bad" data-src="audio/bug2.mp4" aria-pressed="false"><span class="dot" aria-hidden="true">▶</span>Listen</button></div>
       </div>
       <div class="bug">
         <span class="id">BUG-003</span>
@@ -196,7 +196,7 @@ footer { color: var(--muted); font-size: .85rem; border-top: 1px solid var(--rul
           <div class="pair"><b>03/04/2026</b> → "March fourth" · <b>01.02.1990</b> → "January second"</div>
           <p>On a British English voice, where day-first is the standard too. An appointment on 3 April becomes one on 4 March.</p>
         </div>
-        <div class="side"><span class="chip high">high</span><button class="play bad" data-src="audio/bug3.m4a" aria-pressed="false"><span class="dot" aria-hidden="true">▶</span>Listen</button></div>
+        <div class="side"><span class="chip high">high</span><button class="play bad" data-src="audio/bug3.mp4" aria-pressed="false"><span class="dot" aria-hidden="true">▶</span>Listen</button></div>
       </div>
       <div class="bug">
         <span class="id">BUG-004</span>
@@ -205,18 +205,18 @@ footer { color: var(--muted); font-size: .85rem; border-top: 1px solid var(--rul
           <div class="pair"><b>IFSC WYXK0992832</b> → "Wix zero nine…" · <b>PAN IYPPV5695G</b> → "Apu five six…"</div>
           <p>Unconfirmed: the transcriber could be at fault here, so this one waits for a listening check.</p>
         </div>
-        <div class="side"><span class="chip check">needs ear check</span><button class="play" data-src="audio/bug4.m4a" aria-pressed="false"><span class="dot" aria-hidden="true">▶</span>Listen</button></div>
+        <div class="side"><span class="chip check">needs ear check</span><button class="play" data-src="audio/bug4.mp4" aria-pressed="false"><span class="dot" aria-hidden="true">▶</span>Listen</button></div>
       </div>
       <div class="bug">
         <span class="id">BUG-005</span>
         <div class="body">
           <h3>Hidden characters make the voice and the screen disagree</h3>
           <div class="pair"><b>screen ₹500</b> → voice "five" (right-to-left override) · <b>screen ₹5</b> → voice "sub alias fifty thousand rupees" (SSML)</div>
-          <p data-fill="bug5">15 of 21 attacks change what is spoken without changing what is shown, including invisible characters that drop the last digits of an OTP.</p>
+          <p data-fill="bug5">43 of 63 attack results change what is spoken without changing what is shown, including invisible characters that drop the last digits of an OTP.</p>
         </div>
         <div class="side"><span class="chip crit">security</span>
-          <button class="play bad" data-src="audio/bug5a.m4a" aria-pressed="false"><span class="dot" aria-hidden="true">▶</span>₹500 → "five"</button>
-          <button class="play bad" data-src="audio/bug5b.m4a" aria-pressed="false"><span class="dot" aria-hidden="true">▶</span>SSML</button>
+          <button class="play bad" data-src="audio/bug5a.mp4" aria-pressed="false"><span class="dot" aria-hidden="true">▶</span>₹500 → "five"</button>
+          <button class="play bad" data-src="audio/bug5b.mp4" aria-pressed="false"><span class="dot" aria-hidden="true">▶</span>SSML</button>
         </div>
       </div>
     </div>
@@ -260,14 +260,14 @@ footer { color: var(--muted); font-size: .85rem; border-top: 1px solid var(--rul
 
   <footer>
     <span>Readback · built in Python with AssemblyAI's Voice Agent API and Universal speech-to-text.</span>
-    <span data-fill="footer">173 test cases · 139 automated tests · all figures in this page come from the runs in the project's <span class="mono">findings/SCORECARD.md</span>.</span>
+    <span data-fill="footer">173 test cases × 3 voices · 144 automated tests · all figures in this page come from the runs in the project's <span class="mono">findings/SCORECARD.md</span>.</span>
   </footer>
 </div>
 
 <script>
 const CATS = [
-  ["money", 0.32, 1.00], ["codes", 0.39, 1.00], ["phone", 0.60, 1.00], ["dates", 0.60, 1.00],
-  ["contact", 0.83, 1.00], ["medical", 1.00, 1.00], ["attacks", 0.29, 1.00], ["names", 0.60, 0.70]
+  ["money", 0.316, 1.00], ["codes", 0.390, 1.00], ["attacks", 0.317, 1.00], ["phone", 0.567, 1.00], ["dates", 0.600, 1.00],
+  ["contact", 0.778, 0.944], ["names", 0.733, 0.800], ["medical", 1.00, 1.00]
 ];
 const bars = document.getElementById("bars");
 for (const [name, before, after] of CATS) {

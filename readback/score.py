@@ -433,6 +433,8 @@ def main() -> None:
     p.add_argument("--no-llm", action="store_true", help="rules only; unclear cases stay UNCLEAR")
     args = p.parse_args()
     run_dir = Path(args.run_dir).resolve()
+    if not (run_dir / "results.jsonl").exists():
+        raise SystemExit(f"no results.jsonl in {args.run_dir}; run `python -m readback.runner` first")
     print_summary(score_run(run_dir, not args.no_llm), run_dir)
 
 

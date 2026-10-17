@@ -4,33 +4,33 @@
 
 AssemblyAI's TTS promises that "order numbers, prices, dates, and confirmation codes come out exactly as written." Readback tests that promise on what Indian voice agents read out every day: lakh/crore amounts, OTPs, PNRs, doses, DD/MM dates, and text that an attacker has tampered with. **SafeSpeak** is a drop-in layer that makes the voice say what the screen shows, or say nothing.
 
-Built for AssemblyAI's *Voice hackathon week: Hack into speech* (17–24 Oct 2026).
+Built for AssemblyAI's *Voice hackathon week: Hack into speech* (17–24 Oct 2026). Project page with audio: https://claude.ai/artifact/AMH1pcv3Y8vNKKbJ3e7Gqr (private until shared).
 
 ## Results
 
 <!-- results:start -->
-**173 cases** (152 everyday + 21 attacks), voice `anna`, scored on the verbatim transcript:
+**173 cases** (152 everyday messages + 21 attacks) × **3 voices** (anna, alba, george) = 519 results, scored on the word-for-word transcript:
 
 | | Plain TTS | With SafeSpeak |
 |---|---|---|
-| Critical values correct (or safely blocked) | **52%** | **98%** |
-| Misreads | **76** | **0** |
-| Refused to speak (couldn't verify, sends SMS instead) | – | 1 |
-| Needs an ear check (names transcribed differently) | 7 | 3 |
+| Critical values correct (or safely held back) | **53%** | **99%** |
+| Misreads | **230** | **0** |
+| Refused to speak (couldn't verify, sends SMS instead) | – | 0 |
+| Needs an ear check (names and URLs transcribed differently) | 16 | 7 |
 
-Money 32% → 100% · codes 39% → 100% · phone 60% → 100% · dates 60% → 100% · attacks 29% → 100% · medical doses were already 100%.
+Money 32% → 100% · codes 39% → 100% · phone 57% → 100% · dates 60% → 100% · attacks 32% → 100% · medical doses were already 100%. The three voices score within one point of each other.
 Full table: [findings/SCORECARD.md](findings/SCORECARD.md).
 <!-- results:end -->
 
 | Bug | What happens | Example |
 |---|---|---|
-| [BUG-001](findings/BUG-001.md) | Indian digit grouping is misread (every voice, 30/30) | ₹10,00,000 → "ten **zero** rupees" |
+| [BUG-001](findings/BUG-001.md) | Indian digit grouping is misread (72/72 across three voices) | ₹10,00,000 → "ten **zero** rupees" |
 | [BUG-002](findings/BUG-002.md) | OTPs, PNRs, pincodes and phone numbers are read as amounts | OTP 482910 → "four hundred eighty two thousand nine hundred ten" |
 | [BUG-003](findings/BUG-003.md) | DD/MM dates are read in US order, even on an en-GB voice | 03/04/2026 → "**March fourth**" |
 | [BUG-004](findings/BUG-004.md) | Letter runs in codes pronounced as words *(needs ear check)* | IFSC WYXK… → "Wix" |
 | [BUG-005](findings/BUG-005.md) | Hidden characters and markup: the screen and the voice disagree | screen ₹500, voice "**five**" |
 
-A side finding that matters for anyone testing TTS: **a formatted speech-to-text check would have hidden 43 of the 76 misreads**, because it turns "one fifty thousand rupees" back into "₹1,50,000". Readback scores the *verbatim* transcript (`format_text=false`) instead.
+A side finding that matters for anyone testing TTS: **a formatted speech-to-text check would have hidden 128 of the 230 misreads**, because it turns "one fifty thousand rupees" back into "₹1,50,000". Readback scores the *verbatim* transcript (`format_text=false`) instead.
 
 ## How it works
 
@@ -85,7 +85,7 @@ cp .env.example .env   # then paste your ASSEMBLYAI_API_KEY into .env
 .venv/bin/python -m pytest -q
 ```
 
-Everything the API returns is cached by content in `.cache/`, so re-running or re-scoring costs nothing. `--voices` defaults to anna, alba and george; the runs above use only anna, because the misreads were identical across voices.
+Everything the API returns is cached by content in `.cache/`, so re-running or re-scoring costs nothing. `--voices` defaults to anna, alba and george, which is what the results above use.
 
 ## Layout
 
@@ -99,6 +99,7 @@ Everything the API returns is cached by content in `.cache/`, so re-running or r
 | `readback/score.py` | Checkers for each value type; the LLM judge (`judge.py`) is optional and off on the free plan |
 | `readback/sanitize.py` / `safespeak.py` | The SafeSpeak layer |
 | `readback/runner.py` | Runs cases × voices with concurrency, `--safespeak` mode |
+| `site/` | The project page (cheque-style write-up with audio) |
 | `readback/report.py` | Clips of the misread span, and `SCORECARD.md` |
 | `app.py` | Streamlit dashboard |
 | `findings/` | Bug reports with clips, plus the scorecard |

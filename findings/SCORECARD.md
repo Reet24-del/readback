@@ -1,22 +1,30 @@
 # Readback scorecard
 
-Plain TTS: `20261017-131808-voice-agent` + `20261017-132811-voice-agent` (attacks) · SafeSpeak: `20261017-132920-voice-agent-safespeak`
-Engine: AssemblyAI Voice Agent API, voice `anna`, text sent via `greeting` (spoken word for word).
+Plain TTS: `20261017-155750-voice-agent` · SafeSpeak: `20261017-160028-voice-agent-safespeak`
+Engine: AssemblyAI Voice Agent API, voices `alba`, `anna`, `george`, text sent via `greeting` (spoken word for word).
 Heard: AssemblyAI Universal transcription with `format_text=False`.
 
-| Category | Cases | Plain TTS correct | SafeSpeak correct or safely blocked |
+| Category | Results | Plain TTS correct | SafeSpeak correct or safely blocked |
 |---|---|---|---|
-| adversarial | 21 | 29% | 100% |
-| codes | 41 | 39% | 100% |
-| contact | 6 | 83% | 100% |
-| controls | 5 | 100% | 100% |
-| dates | 10 | 60% | 100% |
-| medical | 22 | 100% | 100% |
-| money | 38 | 32% | 100% |
-| names | 10 | 60% | 70% |
-| phone | 20 | 60% | 100% |
-| **all** | **173** | **52%** | **98%** |
+| adversarial | 63 | 32% | 100% |
+| codes | 123 | 39% | 100% |
+| contact | 18 | 78% | 94% |
+| controls | 15 | 100% | 100% |
+| dates | 30 | 60% | 100% |
+| medical | 66 | 100% | 100% |
+| money | 114 | 32% | 100% |
+| names | 30 | 73% | 80% |
+| phone | 60 | 57% | 100% |
+| **all** | **519** | **53%** | **99%** |
 
-- Plain TTS misread **76** critical values; a formatted-STT check would have hidden **43** of them.
+| Voice | Results | Plain TTS correct | SafeSpeak correct or safely blocked |
+|---|---|---|---|
+| alba | 173 | 53% | 99% |
+| anna | 173 | 52% | 98% |
+| george | 173 | 53% | 98% |
+| **all** | **519** | **53%** | **99%** |
+
+- Plain TTS misread **230** critical values; a formatted-STT check would have hidden **128** of them.
 - "Correct" means every critical value was heard as written. UNCLEAR results (abbreviations, names) need an ear check and count as not correct.
-- With SafeSpeak, 3 case(s) are still not clean: name-003, name-008, name-010.
+- With SafeSpeak: **0** misreads, **0** refused because they couldn't be verified (sent as SMS instead).
+- Still not clean with SafeSpeak (7, needs an ear check): contact-005 (george), name-003 (anna), name-008 (anna), name-008 (george), name-010 (alba), name-010 (anna), name-010 (george).

@@ -19,12 +19,12 @@
 ### 0:45–1:25 · The scorecard
 *On screen:* **Scorecard** tab.
 
-> "Readback speaks 152 hard cases through the TTS, transcribes them back with AssemblyAI's own verbatim speech-to-text, and checks every critical value."
+> "Readback speaks 173 hard cases on three voices through the TTS, transcribes them back with AssemblyAI's own verbatim speech-to-text, and checks every critical value."
 
 Point at the numbers:
 - "Every Indian-format amount of a lakh or more was misread. Every OTP and PNR was read as an amount: 'four **billion**…' for a train PNR."
 - "Medical doses were perfect, which is good news."
-- "And this column: **37 of these failures would be hidden** if you checked with formatted speech-to-text, because it turns 'one fifty thousand' back into ₹1,50,000."
+- "And this column: **128 of the 230 failures would be hidden** if you checked with formatted speech-to-text, because it turns 'one fifty thousand' back into ₹1,50,000."
 
 *On screen:* **Failures** tab → expand **money-006** → play **Just the critical part**.
 
@@ -40,7 +40,7 @@ Point at the numbers:
 
 *On screen:* **Before / after** tab.
 
-> "Plain TTS got 52% of critical values right. With SafeSpeak: 98%, with zero misreads. The rest it either refused to speak, or they're names the transcriber spelled differently."
+> "Across three voices, plain TTS got 53% of critical values right. With SafeSpeak: 99%, with zero misreads. The last 1% are names the transcriber spelled differently."
 
 ### 2:35–2:55 · Close
 > "Five bugs found, with reproductions and audio, and a drop-in fix. Readback: if a voice agent reads out your money, it should say what's written."
