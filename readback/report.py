@@ -3,6 +3,7 @@
     python -m readback.report clips runs/<run> BUG-002 code-002 phone-007 ...   # critical-span WAVs
     python -m readback.report scorecard                                          # findings/SCORECARD.md
     python -m readback.report headline                                           # numbers for the project page
+    python -m readback.report snapshot                                           # results/ for a clone with no API key
 """
 
 from __future__ import annotations
@@ -12,7 +13,7 @@ import json
 import re
 from pathlib import Path
 
-from readback.config import ROOT, RUNS_DIR
+from readback.config import ROOT, RUNS_DIR, SNAPSHOT_DIR
 from readback.tts import Clip
 
 FINDINGS = ROOT / "findings"
@@ -148,6 +149,32 @@ def headline() -> dict:
     }
 
 
+SNAPSHOT_FIELDS = (
+    "case_id", "suite", "category", "severity", "voice", "engine", "text", "critical", "value", "status", "method",
+    "reason", "heard_span", "verbatim", "formatted", "formatted_hides_it", "needs_ear_check", "error",
+)
+
+
+def snapshot() -> list[Path]:
+    """Copy the headline runs into results/ as text only (no audio), for a fresh clone with no API key."""
+    h = headline()
+    written = []
+    for name in (h["base"], h["safe"]):
+        src, dst = RUNS_DIR / name, SNAPSHOT_DIR / name
+        dst.mkdir(parents=True, exist_ok=True)
+        with (dst / "scored.jsonl").open("w") as out:
+            for r in load_scored(src):
+                row = {k: r[k] for k in SNAPSHOT_FIELDS if k in r}
+                row["accept"] = r["accept"][:3]
+                if r.get("safespeak"):
+                    s = r["safespeak"]
+                    row["safespeak"] = {"status": s["status"], "spoken_text": s["spoken_text"], "alerts": s["alerts"]}
+                out.write(json.dumps(row, ensure_ascii=False) + "\n")
+        (dst / "run.json").write_text((src / "run.json").read_text())
+        written.append(dst)
+    return written
+
+
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -157,10 +184,14 @@ def main() -> None:
     c.add_argument("case_ids", nargs="+")
     sub.add_parser("scorecard")
     sub.add_parser("headline")
+    sub.add_parser("snapshot")
     args = p.parse_args()
     if args.cmd == "clips":
         for path in export_clips(Path(args.run_dir), args.prefix, args.case_ids):
             print(path.relative_to(ROOT))
+    elif args.cmd == "snapshot":
+        for d in snapshot():
+            print(d.relative_to(ROOT))
     elif args.cmd == "headline":
         print(json.dumps(headline(), indent=2))
     else:

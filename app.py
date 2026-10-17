@@ -15,7 +15,7 @@ import pandas as pd
 import streamlit as st
 
 from readback import cases as case_lib
-from readback.config import ROOT, RUNS_DIR
+from readback.config import ROOT, RUNS_DIR, SNAPSHOT_DIR
 from readback.report import critical_span
 from readback.safespeak import prepare, speak, speak_raw
 from readback.score import score_run
@@ -37,6 +37,8 @@ DEMOS = {
 
 def run_dirs() -> list[Path]:
     dirs = [d for d in RUNS_DIR.glob("2026*") if (d / "results.jsonl").exists()]
+    if not dirs:  # a fresh clone has no runs/: show the committed text-only snapshot
+        dirs = [d for d in SNAPSHOT_DIR.glob("2026*") if (d / "scored.jsonl").exists()]
     return sorted(dirs, key=lambda d: d.name, reverse=True)
 
 
@@ -48,15 +50,17 @@ def run_info(d: Path) -> dict:
 
 
 @st.cache_data(show_spinner="Scoring run…")
-def load_scored(run: str, mtime: float) -> list[dict]:
-    d = RUNS_DIR / run
-    if not (d / "scored.jsonl").exists() or (d / "scored.jsonl").stat().st_mtime < (d / "results.jsonl").stat().st_mtime:
+def load_scored(path: str, mtime: float) -> list[dict]:
+    d = Path(path)
+    results, done = d / "results.jsonl", d / "scored.jsonl"
+    if results.exists() and (not done.exists() or done.stat().st_mtime < results.stat().st_mtime):
         score_run(d, use_llm=False)
-    return [json.loads(line) for line in (d / "scored.jsonl").open()]
+    return [json.loads(line) for line in done.open()]
 
 
 def scored(d: Path) -> list[dict]:
-    return load_scored(d.name, (d / "results.jsonl").stat().st_mtime)
+    src = d / "results.jsonl" if (d / "results.jsonl").exists() else d / "scored.jsonl"
+    return load_scored(str(d), src.stat().st_mtime)
 
 
 def confirmations(d: Path) -> dict:
@@ -119,6 +123,8 @@ attack_base = next((scored(d) for d in baseline_dirs if any(r["category"] == "ad
 attack_base = [r for r in attack_base if r["category"] == "adversarial"]
 
 st.title("🔊 Readback")
+if all(d.parent == SNAPSHOT_DIR for d in dirs):
+    st.info("Showing the published results (text only). To hear the audio and re-run the tests, add an AssemblyAI API key to `.env` and run `python -m readback.runner`.")
 st.markdown("**Does the TTS say exactly what's written?** Readback speaks hard Indian money, medicine, code and date cases through AssemblyAI's TTS, transcribes them back, and flags every critical value that comes out wrong. **SafeSpeak** fixes them before anyone hears them.")
 
 tab_score, tab_fail, tab_attack, tab_safe, tab_demo, tab_find = st.tabs(
@@ -283,9 +289,13 @@ with tab_demo:
             for f in plan.sanitized.findings:
                 st.warning(f"{f.severity.upper()} · {f.kind}: {f.detail}")
     if st.button("▶ Speak both", type="primary"):
-        with st.spinner("Speaking and transcribing…"):
-            raw_clip, raw_heard, raw_checks = asyncio.run(speak_raw(text, voice))
-            safe_result = asyncio.run(speak(text, voice))
+        try:
+            with st.spinner("Speaking and transcribing…"):
+                raw_clip, raw_heard, raw_checks = asyncio.run(speak_raw(text, voice))
+                safe_result = asyncio.run(speak(text, voice))
+        except Exception as e:  # most often: no ASSEMBLYAI_API_KEY in .env
+            st.error(f"Couldn't reach AssemblyAI: {e}")
+            st.stop()
         l, r = st.columns(2)
         with l:
             st.subheader("Plain TTS")

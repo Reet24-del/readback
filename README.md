@@ -18,7 +18,7 @@ Built for AssemblyAI's *Voice hackathon week: Hack into speech* (17–24 Oct 202
 | Refused to speak (couldn't verify, sends SMS instead) | – | 0 |
 | Needs an ear check (names and URLs transcribed differently) | 16 | 7 |
 
-Money 32% → 100% · codes 39% → 100% · phone 57% → 100% · dates 60% → 100% · attacks 32% → 100% · medical doses were already 100%. The three voices score within one point of each other.
+Money 32% → 100% · codes 39% → 100% · phone 57% → 100% · dates 60% → 100% · attacks 32% → 100% · medical doses were already 100%. The three voices score within one point of each other, and the two voices the API accepts but the docs don't list (`iris`, `reid`) fail the same 18 of 18 bug cases. The misreads come from shared text normalization, not from any one voice.
 Full table: [findings/SCORECARD.md](findings/SCORECARD.md).
 <!-- results:end -->
 
@@ -61,6 +61,17 @@ uv venv .venv && uv pip install -p .venv -r requirements.txt
 cp .env.example .env   # then paste your ASSEMBLYAI_API_KEY into .env
 ```
 
+## No API key? Start here
+
+The published results are committed as text in `results/`, so the dashboard works straight from a clone:
+
+```bash
+uv venv .venv && uv pip install -p .venv -r requirements.txt
+.venv/bin/python -m streamlit run app.py
+```
+
+The bug reports in `findings/` include the key audio clips. To hear every result and re-run the tests, add an API key (below).
+
 ## Use it
 
 ```bash
@@ -81,7 +92,10 @@ cp .env.example .env   # then paste your ASSEMBLYAI_API_KEY into .env
 .venv/bin/python -m readback.report scorecard
 .venv/bin/python -m readback.report clips runs/<run> BUG-00X <case-id> ...
 
-# tests (no API calls)
+# refresh the committed text-only results
+.venv/bin/python -m readback.report snapshot
+
+# tests (no API calls; includes fuzzing and a headless render of the dashboard)
 .venv/bin/python -m pytest -q
 ```
 
@@ -103,6 +117,7 @@ Everything the API returns is cached by content in `.cache/`, so re-running or r
 | `readback/report.py` | Clips of the misread span, and `SCORECARD.md` |
 | `app.py` | Streamlit dashboard |
 | `findings/` | Bug reports with clips, plus the scorecard |
+| `results/` | Text-only snapshot of the published runs, so the dashboard works without an API key |
 | `DEMO_SCRIPT.md` / `DISCORD_POSTS.md` | Demo video script and draft posts (not posted) |
 
 ## Limits

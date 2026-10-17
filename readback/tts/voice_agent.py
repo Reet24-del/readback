@@ -24,6 +24,8 @@ SAMPLE_RATE = 24_000  # reply.audio is base64 PCM16 mono 24 kHz
 VOICES = {
     "en-US": ["alba", "eve", "george", "jane", "jean", "mary", "michael"],
     "en-GB": ["anna", "charles", "paul", "vera"],
+    # Accepted by the API (it lists them in its invalid-voice error) but not in the docs as of Oct 2026.
+    "undocumented": ["iris", "reid"],
 }
 DEFAULT_VOICES = ["anna", "alba", "george"]
 

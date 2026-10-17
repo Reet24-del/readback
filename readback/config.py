@@ -7,7 +7,9 @@ from dotenv import load_dotenv
 
 ROOT = Path(__file__).resolve().parent.parent
 CACHE_DIR = ROOT / ".cache"
-RUNS_DIR = ROOT / "runs"
+RUNS_DIR = Path(os.environ.get("READBACK_RUNS_DIR", ROOT / "runs"))
+# Text-only copies of the published runs, committed so the dashboard works from a fresh clone with no API key.
+SNAPSHOT_DIR = ROOT / "results"
 
 load_dotenv(ROOT / ".env")
 

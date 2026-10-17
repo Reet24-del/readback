@@ -155,7 +155,7 @@ footer { color: var(--muted); font-size: .85rem; border-top: 1px solid var(--rul
   <section aria-labelledby="results">
     <div class="eyebrow">Results</div>
     <h2 id="results">Half the critical values came out wrong. SafeSpeak brings misreads to zero.</h2>
-    <p data-fill="scope">173 cases (152 everyday messages and 21 attacks) on three voices, <span class="mono">anna</span>, <span class="mono">alba</span> and <span class="mono">george</span>: 519 results, each scored on a word-for-word transcript of the audio.</p>
+    <p data-fill="scope">173 cases (152 everyday messages and 21 attacks) on three voices, <span class="mono">anna</span>, <span class="mono">alba</span> and <span class="mono">george</span>: 519 results, each scored on a word-for-word transcript of the audio. Two voices the API accepts but the docs don't list, <span class="mono">iris</span> and <span class="mono">reid</span>, fail the same bug cases, so the misreads come from shared text normalization rather than any one voice.</p>
     <div class="big">
       <div class="from"><strong data-fill="before">53%</strong><span>correct with plain TTS</span></div>
       <div class="to"><strong data-fill="after">99%</strong><span>correct or safely held back, with SafeSpeak</span></div>
@@ -260,7 +260,7 @@ footer { color: var(--muted); font-size: .85rem; border-top: 1px solid var(--rul
 
   <footer>
     <span>Readback · built in Python with AssemblyAI's Voice Agent API and Universal speech-to-text.</span>
-    <span data-fill="footer">173 test cases × 3 voices · 144 automated tests · all figures in this page come from the runs in the project's <span class="mono">findings/SCORECARD.md</span>.</span>
+    <span data-fill="footer">173 test cases × 3 voices · 146 automated tests · all figures in this page come from the runs in the project's <span class="mono">findings/SCORECARD.md</span>.</span>
   </footer>
 </div>
 

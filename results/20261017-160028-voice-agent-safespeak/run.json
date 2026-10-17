@@ -1,0 +1,15 @@
+{
+  "engine": "voice-agent",
+  "suites": "all",
+  "voices": [
+    "anna",
+    "alba",
+    "george"
+  ],
+  "cases": 173,
+  "jobs": 519,
+  "safespeak": true,
+  "started": "2026-10-17T16:00:28+0530",
+  "finished": "2026-10-17T16:19:24+0530",
+  "errors": 0
+}
