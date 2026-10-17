@@ -1,7 +1,7 @@
 import pytest
 
 from readback import cases
-from readback.safespeak import chunk_digits, prepare, verify, year_words
+from readback.safespeak import chunk_digits, prepare, say_digits, verify, year_words
 from readback.score import score_row
 
 
@@ -19,7 +19,9 @@ from readback.score import score_row
         ("Dosage: 1-0-1 after food.", "Dosage: one in the morning, none in the afternoon, and one at night after food."),
         ("Metformin 500 mg BD.", "Metformin five hundred milligrams twice a day."),
         ("Call +91 98765 43210.", "Call plus nine one, nine eight seven six five, four three two one zero."),
-        ("Dial 112 now.", "Dial one one two now."),
+        ("Dial 112 now.", "Dial double one two now."),
+        ("WhatsApp +91-90000-00001.", "WhatsApp plus nine one, nine double zero double zero, double zero double zero one."),
+        ("Helpline 1800 425 1111.", "Helpline one eight double zero, four two five, double one double one."),
         ("Your OTP is 482910.", "Your OTP is four eight two, nine one zero."),
         ("Vehicle MH12AB1234.", "Vehicle M H one two A B one two three four."),
         ("On 03/04/2026.", "On the third of April, twenty twenty six."),
@@ -37,6 +39,18 @@ from readback.score import score_row
 )
 def test_spoken_text(text, spoken):
     assert prepare(text).spoken_text == spoken
+
+
+def test_say_digits_round_trips_through_the_scorer():
+    import random
+
+    from readback.numparse import to_digits
+
+    rng = random.Random(5)
+    for _ in range(500):
+        s = "".join(rng.choices("0019", k=rng.randrange(1, 12)))  # few symbols -> many runs
+        assert to_digits(say_digits(s).split()) == s, (s, say_digits(s))
+    assert say_digits("0000000") == "triple zero double zero double zero"
 
 
 def test_chunk_digits():

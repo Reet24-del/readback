@@ -191,13 +191,14 @@ with tab_fail:
 
 with tab_attack:
     st.markdown("Each attack hides something in the text that changes what's **spoken** but not what's **shown**. The expected value is what the screen shows, so a FAIL means the voice and the screen disagree.")
-    safe_by_id = {r["case_id"]: r for r in safe_rows if r["category"] == "adversarial"}
+    safe_by_key = {(r["case_id"], r["voice"]): r for r in safe_rows if r["category"] == "adversarial"}
     table = []
     for r in attack_base:
-        s = safe_by_id.get(r["case_id"], {})
+        s = safe_by_key.get((r["case_id"], r["voice"]), {})
         table.append(
             {
                 "attack": r["case_id"].removeprefix("atk-"),
+                "voice": r["voice"],
                 "screen shows": NOTES.get(r["case_id"], "").split("Screen shows: ", 1)[-1],
                 "plain TTS said": r.get("verbatim", ""),
                 "plain": r["status"],
@@ -217,8 +218,8 @@ with tab_safe:
     if not safe_rows:
         st.info("No SafeSpeak run yet: `python -m readback.runner --suite all --voices anna --safespeak`.")
     else:
-        before = {r["case_id"]: r for r in base_rows + attack_base}
-        after = {r["case_id"]: r for r in safe_rows}
+        before = {(r["case_id"], r["voice"]): r for r in base_rows + attack_base}
+        after = {(r["case_id"], r["voice"]): r for r in safe_rows}
         common = sorted(set(before) & set(after))
         b_pass = sum(before[c]["status"] == "PASS" for c in common)
         a_safe = sum(after[c]["status"] in ("PASS", "BLOCKED") for c in common)
@@ -236,15 +237,34 @@ with tab_safe:
                     "category": cat,
                     "plain TTS": sum(before[c]["status"] == "PASS" for c in ids) / len(ids),
                     "SafeSpeak": sum(after[c]["status"] in ("PASS", "BLOCKED") for c in ids) / len(ids),
-                    "cases": len(ids),
+                    "results": len(ids),
                 }
             )
+        voices = sorted({v for _, v in common})
+        if len(voices) > 1:
+            st.subheader("By voice")
+            st.dataframe(
+                pd.DataFrame(
+                    [
+                        {
+                            "voice": v,
+                            "plain TTS": sum(before[k]["status"] == "PASS" for k in common if k[1] == v) / sum(k[1] == v for k in common),
+                            "SafeSpeak": sum(after[k]["status"] in ("PASS", "BLOCKED") for k in common if k[1] == v) / sum(k[1] == v for k in common),
+                        }
+                        for v in voices
+                    ]
+                ),
+                column_config={"plain TTS": PCT, "SafeSpeak": PCT},
+                width="stretch",
+                hide_index=True,
+            )
+            st.subheader("By category")
         st.dataframe(pd.DataFrame(cat_rows), column_config={"plain TTS": PCT, "SafeSpeak": PCT}, width="stretch", hide_index=True)
         still = [after[c] for c in common if after[c]["status"] in ("FAIL", "UNCLEAR")]
         if still:
             st.subheader(f"Still not clean with SafeSpeak ({len(still)})")
             st.dataframe(
-                pd.DataFrame([{"case": r["case_id"], "status": r["status"], "said": (r.get("safespeak") or {}).get("spoken_text", ""), "heard": r.get("verbatim", ""), "why": r["reason"]} for r in still]),
+                pd.DataFrame([{"case": r["case_id"], "voice": r["voice"], "status": r["status"], "said": (r.get("safespeak") or {}).get("spoken_text", ""), "heard": r.get("verbatim", ""), "why": r["reason"]} for r in still]),
                 width="stretch",
                 hide_index=True,
             )

@@ -60,28 +60,36 @@ def scorecard() -> Path:
     attack = next(d for d in reversed(plain) if any(r["category"] == "adversarial" for r in load_scored(d)))
     safe = next((d for d in reversed(runs) if info[d].get("safespeak")), None)
 
-    before = {r["case_id"]: r for r in load_scored(base) + [r for r in load_scored(attack) if r["category"] == "adversarial"]}
-    after = {r["case_id"]: r for r in load_scored(safe)} if safe else {}
-    cats = sorted({r["category"] for r in before.values()})
+    key = lambda r: (r["case_id"], r["voice"])
+    before = {key(r): r for r in load_scored(base) + [r for r in load_scored(attack) if r["category"] == "adversarial"]}
+    after = {key(r): r for r in load_scored(safe)} if safe else {}
+    voices = sorted({v for _, v in before})
+    sources = f"`{base.name}`" + (f" + `{attack.name}` (attacks)" if attack != base else "")
 
+    def table(label: str, groups: dict[str, list]) -> list[str]:
+        rows = [f"| {label} | Results | Plain TTS correct | SafeSpeak correct or safely blocked |", "|---|---|---|---|"]
+        tot_b = tot_a = tot_n = 0
+        for name, ks in groups.items():
+            b = sum(before[k]["status"] == "PASS" for k in ks)
+            a = sum(after.get(k, {}).get("status") in ("PASS", "BLOCKED") for k in ks)
+            tot_b, tot_a, tot_n = tot_b + b, tot_a + a, tot_n + len(ks)
+            rows.append(f"| {name} | {len(ks)} | {_pct(b, len(ks))} | {_pct(a, len(ks)) if after else '-'} |")
+        rows.append(f"| **all** | **{tot_n}** | **{_pct(tot_b, tot_n)}** | **{_pct(tot_a, tot_n) if after else '-'}** |")
+        return rows
+
+    by_cat = {c: [k for k, r in before.items() if r["category"] == c] for c in sorted({r["category"] for r in before.values()})}
+    by_voice = {v: [k for k in before if k[1] == v] for v in voices}
     lines = [
         "# Readback scorecard",
         "",
-        f"Plain TTS: `{base.name}` + `{attack.name}` (attacks)" + (f" · SafeSpeak: `{safe.name}`" if safe else ""),
-        "Engine: AssemblyAI Voice Agent API, voice `anna`, text sent via `greeting` (spoken word for word).",
+        f"Plain TTS: {sources}" + (f" · SafeSpeak: `{safe.name}`" if safe else ""),
+        f"Engine: AssemblyAI Voice Agent API, voices {', '.join(f'`{v}`' for v in voices)}, text sent via `greeting` (spoken word for word).",
         "Heard: AssemblyAI Universal transcription with `format_text=False`.",
         "",
-        "| Category | Cases | Plain TTS correct | SafeSpeak correct or safely blocked |",
-        "|---|---|---|---|",
+        *table("Category", by_cat),
     ]
-    tot_b = tot_a = tot_n = 0
-    for cat in cats:
-        ids = [c for c, r in before.items() if r["category"] == cat]
-        b = sum(before[c]["status"] == "PASS" for c in ids)
-        a = sum(after.get(c, {}).get("status") in ("PASS", "BLOCKED") for c in ids)
-        tot_b, tot_a, tot_n = tot_b + b, tot_a + a, tot_n + len(ids)
-        lines.append(f"| {cat} | {len(ids)} | {_pct(b, len(ids))} | {_pct(a, len(ids)) if after else '-'} |")
-    lines.append(f"| **all** | **{tot_n}** | **{_pct(tot_b, tot_n)}** | **{_pct(tot_a, tot_n) if after else '-'}** |")
+    if len(voices) > 1:
+        lines += ["", *table("Voice", by_voice)]
     hidden = sum(bool(r.get("formatted_hides_it")) for r in before.values())
     fails = sum(r["status"] == "FAIL" for r in before.values())
     lines += [
@@ -90,8 +98,11 @@ def scorecard() -> Path:
         "- \"Correct\" means every critical value was heard as written. UNCLEAR results (abbreviations, names) need an ear check and count as not correct.",
     ]
     if after:
-        still = [c for c in before if after.get(c, {}).get("status") in ("FAIL", "UNCLEAR")]
-        lines.append(f"- With SafeSpeak, {len(still)} case(s) are still not clean" + (f": {', '.join(still)}." if still else "."))
+        a_fail = sum(after.get(k, {}).get("status") == "FAIL" for k in before)
+        blocked = sum(after.get(k, {}).get("status") == "BLOCKED" for k in before)
+        still = sorted(f"{c} ({v})" for c, v in before if after.get((c, v), {}).get("status") in ("FAIL", "UNCLEAR"))
+        lines.append(f"- With SafeSpeak: **{a_fail}** misreads, **{blocked}** refused because they couldn't be verified (sent as SMS instead).")
+        lines.append(f"- Still not clean with SafeSpeak ({len(still)}, needs an ear check)" + (f": {', '.join(still)}." if still else ": none."))
     out = FINDINGS / "SCORECARD.md"
     out.write_text("\n".join(lines) + "\n")
     return out

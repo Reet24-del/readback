@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 import asyncio
+import itertools
 import re
 from dataclasses import dataclass, field
 
@@ -97,8 +98,33 @@ def spell(s: str) -> str:
     return " ".join(ONES[int(c)] if c.isdigit() else ("dash" if c == "-" else c.upper()) for c in s if c.isalnum() or c == "-")
 
 
+def say_digits(g: str) -> str:
+    """Digit by digit, with runs said the way Indian phone numbers are read aloud.
+
+    "90000" -> "nine double zero double zero". A long run of plain "zero zero zero zero"
+    is easy to miscount, for both listeners and transcribers.
+    """
+    out: list[str] = []
+    for d, run in itertools.groupby(c for c in g if c.isdigit()):
+        n, w = len(list(run)), ONES[int(d)]
+        while n:
+            if n == 4:
+                out += [f"double {w}", f"double {w}"]
+                n = 0
+            elif n >= 3:
+                out.append(f"triple {w}")
+                n -= 3
+            elif n == 2:
+                out.append(f"double {w}")
+                n = 0
+            else:
+                out.append(w)
+                n = 0
+    return " ".join(out)
+
+
 def digit_groups(*groups: str) -> str:
-    return ", ".join(verbalize.digits(g) for g in groups if g)
+    return ", ".join(say_digits(g) for g in groups if g)
 
 
 def say_address(addr: str, spell_domain: bool = False) -> str:

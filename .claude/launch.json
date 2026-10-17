@@ -17,6 +17,18 @@
         "false"
       ],
       "port": 8501
+    },
+    {
+      "name": "site",
+      "runtimeExecutable": ".venv/bin/python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8765",
+        "--directory",
+        "site"
+      ],
+      "port": 8765
     }
   ]
 }
