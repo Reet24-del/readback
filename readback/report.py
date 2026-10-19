@@ -112,9 +112,12 @@ def scorecard() -> Path:
     return out
 
 
-def headline() -> dict:
-    """The numbers the project page shows, from the same runs as SCORECARD.md."""
-    runs = sorted((d for d in RUNS_DIR.glob("2026*") if (d / "results.jsonl").exists()), key=lambda d: d.name)
+def headline(runs_dir: Path = RUNS_DIR) -> dict:
+    """The numbers the project page shows, from the same runs as SCORECARD.md (or the results/ snapshot)."""
+    runs = sorted(
+        (d for d in runs_dir.glob("2026*") if (d / "results.jsonl").exists() or (d / "scored.jsonl").exists()),
+        key=lambda d: d.name,
+    )
     info = {d: json.loads((d / "run.json").read_text()) if (d / "run.json").exists() else {} for d in runs}
     plain = [d for d in runs if not info[d].get("safespeak")]
     safes = [d for d in runs if info[d].get("safespeak")]

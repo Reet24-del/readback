@@ -20,6 +20,10 @@ from readback.score import score_row
         ("Metformin 500 mg BD.", "Metformin five hundred milligrams twice a day."),
         ("Call +91 98765 43210.", "Call plus nine one, nine eight seven six five, four three two one zero."),
         ("Dial 112 now.", "Dial double one two now."),
+        # a value followed by a comma is punctuation, not part of the number
+        ("Your pickup code is 482910, and it expires.", "Your pickup code is four eight two, nine one zero, and it expires."),
+        ("Your EMI of ₹24,999, due soon.", "Your EMI of twenty four thousand nine hundred ninety nine rupees, due soon."),
+        ("Take 500 mg, then rest.", "Take five hundred milligrams, then rest."),
         ("WhatsApp +91-90000-00001.", "WhatsApp plus nine one, nine double zero double zero, double zero double zero one."),
         ("Helpline 1800 425 1111.", "Helpline one eight double zero, four two five, double one double one."),
         ("Your OTP is 482910.", "Your OTP is four eight two, nine one zero."),

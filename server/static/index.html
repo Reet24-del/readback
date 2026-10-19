@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Readback</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <div class="brand"><span class="mark" aria-hidden="true">₹</span><span>Readback</span></div>
+    <p class="tag">Reminder calls that say numbers right.</p>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button role="tab" id="t-compose" aria-controls="tab-compose" aria-selected="true">Compose</button>
+      <button role="tab" id="t-campaign" aria-controls="tab-campaign" aria-selected="false">Campaign</button>
+      <button role="tab" id="t-call" aria-controls="tab-call" aria-selected="false">Live call</button>
+      <button role="tab" id="t-evidence" aria-controls="tab-evidence" aria-selected="false">Evidence</button>
+    </nav>
+  </div>
+</header>
+
+<div id="gate" class="gate" hidden>
+  <form id="gate-form" class="card">
+    <h2>Demo passcode</h2>
+    <p>This demo spends real API credits, so it asks for a passcode.</p>
+    <label for="gate-code">Passcode</label>
+    <input id="gate-code" type="password" autocomplete="off" required>
+    <button class="primary" type="submit">Continue</button>
+    <p id="gate-error" class="error" hidden></p>
+  </form>
+</div>
+
+<main class="wrap">
+  <!-- ============ COMPOSE ============ -->
+  <section id="tab-compose" role="tabpanel" aria-labelledby="t-compose">
+    <div class="intro">
+      <h1>Check a reminder before you dial</h1>
+      <p>Your opening line reaches the voice word for word. That's exactly where Indian amounts, OTPs and dates get misread. Readback flags them instantly, spells them out with SafeSpeak, and checks the audio.</p>
+    </div>
+    <div class="grid two">
+      <div class="card">
+        <div class="row">
+          <label for="c-template">Template</label>
+          <select id="c-template"></select>
+        </div>
+        <textarea id="c-text" rows="5" spellcheck="false" aria-label="Template text"></textarea>
+        <p class="hint">Placeholders like <span class="mono">{balance}</span> are filled from the customer record.</p>
+        <div class="row">
+          <label for="c-customer">Customer</label>
+          <select id="c-customer"></select>
+        </div>
+        <dl id="c-fields" class="fields"></dl>
+      </div>
+      <div class="card cheque">
+        <div class="eyebrow">The message</div>
+        <p id="c-message" class="msg"></p>
+        <div id="c-alerts"></div>
+        <div class="eyebrow">Before you dial</div>
+        <ul id="c-values" class="values"></ul>
+        <div class="eyebrow">SafeSpeak will say</div>
+        <p id="c-spoken" class="msg spoken"></p>
+        <div class="actions">
+          <label for="c-voice" class="inline">Voice</label>
+          <select id="c-voice" class="voice"></select>
+          <button id="c-check" class="primary">Check by voice</button>
+        </div>
+        <p class="hint">Speaks the message plain and with SafeSpeak, then transcribes both. Results are cached.</p>
+        <p id="c-error" class="error" hidden></p>
+      </div>
+    </div>
+    <div id="c-result" class="grid two" hidden>
+      <div class="card result">
+        <h3>Plain TTS <span id="c-plain-pill" class="pill"></span></h3>
+        <button class="play" data-audio="" id="c-plain-play">▶ Play</button>
+        <p class="heard"><span class="label">Heard</span><span id="c-plain-heard"></span></p>
+        <ul id="c-plain-checks" class="checks"></ul>
+      </div>
+      <div class="card result">
+        <h3>SafeSpeak <span id="c-safe-pill" class="pill"></span></h3>
+        <button class="play" data-audio="" id="c-safe-play">▶ Play</button>
+        <p class="heard"><span class="label">Heard</span><span id="c-safe-heard"></span></p>
+        <ul id="c-safe-checks" class="checks"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CAMPAIGN ============ -->
+  <section id="tab-campaign" role="tabpanel" aria-labelledby="t-campaign" hidden>
+    <div class="intro">
+      <h1>Check a whole campaign</h1>
+      <p>Every customer's message is spoken plain and with SafeSpeak before anyone is called. Anything SafeSpeak can't verify is held back and sent as an SMS instead.</p>
+    </div>
+    <div class="card controls">
+      <div class="row">
+        <label for="k-template">Template</label>
+        <select id="k-template"></select>
+      </div>
+      <div class="row">
+        <label for="k-file">Customers</label>
+        <div class="filepick">
+          <span id="k-source">12 demo customers</span>
+          <input id="k-file" type="file" accept=".csv,text/csv">
+          <button id="k-demo" class="link" type="button" hidden>Use the demo customers</button>
+        </div>
+      </div>
+      <div class="row">
+        <label for="k-voice">Voice</label>
+        <select id="k-voice" class="voice"></select>
+      </div>
+      <div class="actions">
+        <button id="k-run" class="primary">Check all</button>
+        <a id="k-report" class="button" href="#" hidden>Download report (CSV)</a>
+      </div>
+      <p class="hint">CSV columns: name, phone, amount, balance, emi, due_date, otp, medicine, dose, schedule, reference.</p>
+      <p id="k-error" class="error" hidden></p>
+    </div>
+    <div id="k-progress" class="progress" hidden><div class="bar"><i id="k-bar"></i></div><span id="k-count"></span></div>
+    <div id="k-summary" class="summary" hidden></div>
+    <div class="table-wrap">
+      <table id="k-table" hidden>
+        <thead><tr><th>Customer</th><th>Plain TTS</th><th>SafeSpeak</th><th>Action</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ LIVE CALL ============ -->
+  <section id="tab-call" role="tabpanel" aria-labelledby="t-call" hidden>
+    <div class="intro">
+      <h1>Place the call</h1>
+      <p>The agent opens with the reminder, then answers questions in real time. Try "when is it due?" or "what's my balance again?". After every reply, Readback compares what the agent meant to say with what the caller actually heard.</p>
+    </div>
+    <div class="grid call">
+      <div class="card">
+        <div class="row">
+          <label for="v-customer">Customer</label>
+          <select id="v-customer"></select>
+        </div>
+        <div class="row">
+          <label for="v-template">Reminder</label>
+          <select id="v-template"></select>
+        </div>
+        <div class="row">
+          <label for="v-voice">Voice</label>
+          <select id="v-voice" class="voice"></select>
+        </div>
+        <label class="switch" for="v-safe">
+          <input id="v-safe" type="checkbox" checked>
+          <span class="track" aria-hidden="true"></span>
+          <span>SafeSpeak <span id="v-safe-state">on</span></span>
+        </label>
+        <div class="actions">
+          <button id="v-start" class="primary">Start call</button>
+          <button id="v-stop" class="danger" hidden>Hang up</button>
+        </div>
+        <p id="v-status" class="status">Ready. Your browser will ask for the microphone.</p>
+        <p class="hint">Calls cost about ₹6 a minute of API credit and end automatically after 10 minutes. Use headphones to avoid echo.</p>
+      </div>
+      <div class="card transcript" aria-live="polite">
+        <div class="eyebrow">Call</div>
+        <ol id="v-log" class="log"><li class="empty">The conversation will appear here.</li></ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ EVIDENCE ============ -->
+  <section id="tab-evidence" role="tabpanel" aria-labelledby="t-evidence" hidden>
+    <div class="intro">
+      <h1>Why this exists</h1>
+      <p id="e-scope">The research behind Readback: hard Indian cases spoken through AssemblyAI's TTS and scored on a word-for-word transcript.</p>
+    </div>
+    <div class="metrics" id="e-metrics"></div>
+    <div class="card">
+      <h3>Correct critical values, by category</h3>
+      <div class="legend"><span><i class="sw bad"></i>Plain TTS</span><span><i class="sw good"></i>With SafeSpeak</span></div>
+      <div id="e-bars" class="bars"></div>
+    </div>
+    <div class="card">
+      <h3>Bugs found</h3>
+      <ul id="e-bugs" class="bugs"></ul>
+      <p class="hint">Full write-ups with audio and reproduction steps are in the <a href="https://github.com/Reet24-del/readback/tree/main/findings" target="_blank" rel="noopener">findings folder</a>.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="foot"><div class="wrap">Readback · built on AssemblyAI's Voice Agent API and Universal speech-to-text · <a href="https://github.com/Reet24-del/readback" target="_blank" rel="noopener">source</a></div></footer>
+<script type="module" src="app.js"></script>
+</body>
+</html>
