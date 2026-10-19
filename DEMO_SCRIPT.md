@@ -1,50 +1,48 @@
 # Demo video script (under 3 minutes)
 
-**Before recording:** run `.venv/bin/python -m streamlit run app.py`, open the **Live demo** tab, and play each preset once so it's cached and responds instantly. Record the screen with sound (QuickTime → File → New Screen Recording, with the microphone on for the voice-over).
+**Before recording**
+- Start the app: `.venv/bin/python -m uvicorn server.app:app --port 8000`, then open http://localhost:8000 in **Chrome**.
+- Run **Check by voice** once for Aarav (EMI reminder), and run the demo campaign once, so both respond instantly from cache.
+- Wear headphones for the live call. Record with QuickTime (File → New Screen Recording, microphone on for the voice-over).
 
 ---
 
-### 0:00–0:20 · The hook
-*On screen:* Live demo → preset **Bank debit alert** → **▶ Speak both**. Play the **Plain TTS** audio first.
+### 0:00–0:20 · The hook: a real reminder call
+*On screen:* **Live call** → customer Aarav Sharma, reminder **EMI reminder**, **SafeSpeak off** → **Start call**. Let the opening line play.
 
-> "This is a bank alert: ten lakh rupees debited. Listen to what the voice agent actually says."
+> "This is a loan reminder call. Listen to the balance."
 
-*(Audio: "ten **zero** rupees has been debited…", "**March fourth**…")*
+*(Agent: "…due on **May first**… your outstanding loan balance is **ten zero rupees**.")*
 
-> "Ten zero rupees. On March fourth. The text said ten lakh rupees, on the third of April."
+Ask: *"Sorry, what's my outstanding balance?"* → *"…ten zero rupees."* Point at the red ✗ under each reply.
 
-### 0:20–0:45 · The problem
-> "AssemblyAI's TTS promises that prices, dates and confirmation codes come out exactly as written. In India we write money as lakhs, dates as day-month, and we read OTPs digit by digit. So I built **Readback** to test that promise."
+> "The written reminder said ten lakh rupees on the fifth of January. The caller heard 'ten zero rupees' on May first, and the agent repeats the mistake when asked."
 
-### 0:45–1:25 · The scorecard
-*On screen:* **Scorecard** tab.
+### 0:20–0:45 · The fix, live
+*On screen:* Hang up → toggle **SafeSpeak on** → **Start call** → ask the same question.
 
-> "Readback speaks 173 hard cases on three voices through the TTS, transcribes them back with AssemblyAI's own verbatim speech-to-text, and checks every critical value."
+> "Same agent, same data, with SafeSpeak: ten lakh rupees, the fifth of January, and green checks on everything the caller heard. The follow-up answer says ten lakh rupees too, because the agent never saw the raw digits."
 
-Point at the numbers:
-- "Every Indian-format amount of a lakh or more was misread. Every OTP and PNR was read as an amount: 'four **billion**…' for a train PNR."
-- "Medical doses were perfect, which is good news."
-- "And this column: **128 of the 230 failures would be hidden** if you checked with formatted speech-to-text, because it turns 'one fifty thousand' back into ₹1,50,000."
+### 0:45–1:15 · Before you dial: Compose
+*On screen:* **Compose** tab, Aarav, EMI reminder.
 
-*On screen:* **Failures** tab → expand **money-006** → play **Just the critical part**.
+> "Readback flags risky values the moment you write the reminder. The balance hits the lakh bug, the date the DD/MM bug, the helpline number the phone bug. And here's exactly what SafeSpeak will say instead."
 
-### 1:25–1:55 · Security
-*On screen:* **Attacks** tab.
+Click **Check by voice** → plain card shows **Misread**, SafeSpeak card shows **Correct**. Play both.
 
-> "Then I attacked it. A right-to-left override makes the screen show ₹500 while the voice says **five**. An SSML tag makes a screen showing ₹5 say **fifty thousand rupees**. Invisible characters drop the last digits of an OTP. The user sees one thing and hears another."
+### 1:15–1:45 · A whole campaign
+*On screen:* **Campaign** → **Check all** (cached, completes fast).
 
-### 1:55–2:35 · The fix: SafeSpeak
-*On screen:* **Live demo** → play the **SafeSpeak** audio for the bank alert, then switch to the **Hidden-character attack** preset.
+> "Before calling a customer list, check every message. Plain TTS would misread 11 of these 12 calls: 27 wrong values. With SafeSpeak, 11 are ready to call. The twelfth record has hidden characters in it, an attack that makes the screen show ₹500 while the voice says 'five', so Readback holds it for review instead of dialling."
 
-> "SafeSpeak sits in front of the TTS. It makes the text match what the screen shows, spells every value out in plain words, speaks it, then transcribes the audio and checks every value. If a value can't be verified, it refuses to speak and falls back to SMS."
+### 1:45–2:30 · Why: the evidence
+*On screen:* **Evidence** tab.
 
-*On screen:* **Before / after** tab.
+> "This comes from testing AssemblyAI's TTS on 173 Indian cases across three voices. Plain TTS got 53% of critical values right; with SafeSpeak, 99% with zero misreads. Five bugs: lakh amounts, OTPs read as amounts, day-month dates, letter codes, and hidden-character attacks. And 128 of the 230 misreads would be invisible if you checked with formatted speech-to-text, because it turns 'ten zero rupees' back into ₹10,00,000."
 
-> "Across three voices, plain TTS got 53% of critical values right. With SafeSpeak: 99%, with zero misreads. The last 1% are names the transcriber spelled differently."
-
-### 2:35–2:55 · Close
-> "Five bugs found, with reproductions and audio, and a drop-in fix. Readback: if a voice agent reads out your money, it should say what's written."
+### 2:30–2:50 · Close
+> "Readback: check every reminder before you dial, fix it, and watch every reply during the call. Because if a voice agent reads out your money, it should say what's written."
 
 ---
 
-**Tips:** keep the browser zoomed to about 110% so the numbers are readable, mute notifications, and record the bank alert first, since it's the strongest moment.
+**Tips:** zoom the browser to about 110%, mute notifications, and record the live call first, since it's the strongest moment. If the agent phrases its answer differently, just ask about the balance again.

@@ -133,7 +133,7 @@ footer { color: var(--muted); font-size: .85rem; border-top: 1px solid var(--rul
   <header>
     <div class="eyebrow">AssemblyAI Voice hackathon week · Oct 2026</div>
     <h1>Readback</h1>
-    <p class="lede">Voice agents in India read out balances, OTPs and appointment dates all day. Readback checks whether AssemblyAI's text-to-speech says them exactly as written, and SafeSpeak makes sure it does.</p>
+    <p class="lede">Banks and pharmacies in India call customers with reminders full of amounts, OTPs and dates. On AssemblyAI's voice agent the opening line is spoken word for word, and ₹10,00,000 becomes "ten zero rupees". Readback checks every reminder before you dial, fixes it with SafeSpeak, and checks every reply during the call.</p>
   </header>
 
   <!-- Hero: the cheque -->
@@ -151,6 +151,20 @@ footer { color: var(--muted); font-size: .85rem; border-top: 1px solid var(--rul
     <div class="stamp" aria-hidden="true">MISREAD</div>
     <div class="micr" aria-hidden="true"><span>⑆ 110002000 ⑆</span><span>482910 ⑈</span><span>1800 425 1111</span></div>
   </div>
+
+  <section aria-labelledby="product">
+    <div class="eyebrow">The product</div>
+    <h2 id="product">Check every reminder before you dial</h2>
+    <ol class="steps">
+      <li><h3>Compose</h3><p>Write a reminder template. Risky amounts, codes and dates are flagged the moment you type, with the bug each would hit, and you hear plain TTS and SafeSpeak side by side.</p></li>
+      <li><h3>Campaign</h3><p>Check a whole customer list before anyone is called. Values that can't be verified are held back for SMS; records with hidden characters are flagged for review.</p></li>
+      <li><h3>Live call</h3><p>Talk to the agent in the browser. After every reply, Readback compares what the agent meant to say with what the caller actually heard.</p></li>
+    </ol>
+    <div class="callout">
+      <h3>Demo campaign: 12 EMI reminders</h3>
+      <p>Plain TTS would misread <strong>11 of 12 calls</strong> (27 values). With SafeSpeak: 11 ready to call, 1 tampered record held for review, <strong>0 misreads</strong>. And without SafeSpeak the misread spreads: asked "what's my balance?", the agent repeats the raw digits and the caller hears "ten zero rupees" again.</p>
+    </div>
+  </section>
 
   <section aria-labelledby="results">
     <div class="eyebrow">Results</div>
@@ -259,8 +273,8 @@ footer { color: var(--muted); font-size: .85rem; border-top: 1px solid var(--rul
   </section>
 
   <footer>
-    <span>Readback · built in Python with AssemblyAI's Voice Agent API and Universal speech-to-text.</span>
-    <span data-fill="footer">173 test cases × 3 voices · 146 automated tests · all figures in this page come from the runs in the project's <span class="mono">findings/SCORECARD.md</span>.</span>
+    <span>Readback · built in Python with AssemblyAI's Voice Agent API and Universal speech-to-text · <a href="https://github.com/Reet24-del/readback">source on GitHub</a></span>
+    <span data-fill="footer">173 test cases × 3 voices · 163 automated tests · all figures in this page come from the runs in the project's <span class="mono">findings/SCORECARD.md</span>.</span>
   </footer>
 </div>
 
