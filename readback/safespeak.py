@@ -341,6 +341,31 @@ def find_entities(text: str) -> list[Entity]:
             spoken, value = out
             taken.append((m.start(), m.end()))
             found.append(Entity(kind, m.group(), m.start(), m.end(), spoken, value))
+    # Live replies often contain already-spelled amounts. They still need checking.
+    from readback.numparse import find_numbers
+
+    for n in find_numbers(text):
+        if any(n.start < b and a < n.end for a, b in taken):
+            continue
+        if n.value is None and n.digits is None:
+            continue
+        kind, value = "number", {"type": "number", "value": n.value}
+        context = text[max(0, n.start - 30):n.start].lower()
+        if n.digits and (n.value is None or re.search(r"(?:otp|pin|code|password)\s*(?:is|:)?:?\s*$", context)):
+            kind, value = "digits", {"type": "digits", "digits": n.digits}
+        end = n.end
+        unit = re.match(r"\s+(rupees?|dollars?|milligrams?|micrograms?|millilit(?:er|re)s?)\b", text[end:], re.I)
+        if unit and n.value is not None and kind != "digits":
+            name = unit.group(1).lower()
+            end += unit.end()
+            if name.startswith(("rupee", "dollar")):
+                kind, value = "money", {"type": "amount", "value": n.value, "unit": "INR" if name.startswith("rupee") else "USD"}
+            else:
+                kind, value = "dose", {"type": "dose", "amount": n.value, "unit": "mcg" if name.startswith("micro") else "mg" if name.startswith("milligram") else "ml"}
+        original = text[n.start:end]
+        spoken = say_digits(n.digits) if kind == "digits" else original
+        found.append(Entity(kind, original, n.start, end, spoken, value))
+        taken.append((n.start, end))
     return sorted(found, key=lambda e: e.start)
 
 
@@ -366,28 +391,41 @@ class SafeResult:
 
 
 def verify(plan: Plan, said: str, heard: str, fallback: set[int]) -> dict[int, object]:
-    from readback.score import score_row
+    from readback.score import Verdict, score_row
+    from readback.verification import value_windows
+
+    spans, pos = [], 0
+    for i, e in enumerate(plan.entities):
+        form = e.fallback if i in fallback else e.spoken
+        start = said.find(form, pos)
+        if start < 0:
+            return {j: Verdict("UNCLEAR", "alignment", "expected value missing from spoken plan") for j, ent in enumerate(plan.entities) if ent.value is not None}
+        spans.append((start, start + len(form)))
+        pos = start + len(form)
+    windows = value_windows(said, spans, heard)
 
     verdicts = {}
     for i, e in enumerate(plan.entities):
         if e.value is None:
             continue
         form = e.fallback if i in fallback else e.spoken
-        row = {"text": said, "critical": form, "value": e.value, "accept": [form, e.spoken, *derived_forms(e.value)], "verbatim": heard, "error": None}
-        verdicts[i] = score_row(row, use_llm=False)
+        row = {"text": form, "critical": form, "value": e.value, "accept": [form, e.spoken, *derived_forms(e.value)], "verbatim": windows[i], "error": None, "scoped": True}
+        verdicts[i] = score_row(row, use_llm=False) if windows[i] is not None else Verdict("UNCLEAR", "alignment", "could not locate this value in its sentence")
     return verdicts
 
 
 def check_raw(plan: Plan, heard: str) -> list[dict]:
     """Score plain TTS output (no SafeSpeak) against the values SafeSpeak found in the text."""
-    from readback.score import score_row
+    from readback.score import Verdict, score_row
+    from readback.verification import value_windows
 
     checks = []
-    for e in plan.entities:
+    windows = value_windows(plan.sanitized.text, [(e.start, e.end) for e in plan.entities], heard)
+    for i, e in enumerate(plan.entities):
         if e.value is None:
             continue
-        row = {"text": plan.sanitized.text, "critical": e.original, "value": e.value, "accept": [e.spoken, *derived_forms(e.value)], "verbatim": heard, "error": None}
-        v = score_row(row, use_llm=False)
+        row = {"text": e.original, "critical": e.original, "value": e.value, "accept": [e.spoken, *derived_forms(e.value)], "verbatim": windows[i], "error": None, "scoped": True}
+        v = score_row(row, use_llm=False) if windows[i] is not None else Verdict("UNCLEAR", "alignment", "could not locate this value in its sentence")
         checks.append({"value": e.original, "status": v.status, "reason": v.reason})
     return checks
 
@@ -416,7 +454,7 @@ async def speak(text: str, voice: str = "anna", engine=None, use_cache: bool = T
         clip = await engine.asynthesize(said, voice)
         heard = (await asyncio.to_thread(cached_transcribe, "verbatim", clip, use_cache))["text"]
         verdicts = verify(plan, said, heard, fallback)
-        failed = {i for i, v in verdicts.items() if v.status == "FAIL"}
+        failed = {i for i, v in verdicts.items() if v.status != "PASS"}
         result.attempts.append(
             {
                 "said": said,

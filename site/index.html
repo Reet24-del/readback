@@ -161,14 +161,15 @@ footer { color: var(--muted); font-size: .85rem; border-top: 1px solid var(--rul
       <li><h3>Live call</h3><p>Talk to the agent in the browser. After every reply, Readback compares what the agent meant to say with what the caller actually heard.</p></li>
     </ol>
     <div class="callout">
-      <h3>Demo campaign: 12 EMI reminders</h3>
+      <h3>Historical demo campaign: 12 EMI reminders</h3>
       <p>Plain TTS would misread <strong>11 of 12 calls</strong> (27 values). With SafeSpeak: 11 ready to call, 1 tampered record held for review, <strong>0 misreads</strong>. And without SafeSpeak the misread spreads: asked "what's my balance?", the agent repeats the raw digits and the caller hears "ten zero rupees" again.</p>
     </div>
   </section>
 
   <section aria-labelledby="results">
     <div class="eyebrow">Results</div>
-    <h2 id="results">Half the critical values came out wrong. SafeSpeak brings misreads to zero.</h2>
+    <h2 id="results">Historical benchmark: 230 misreads before SafeSpeak, zero after.</h2>
+    <p>These committed measurements predate the stricter field alignment and uncertain-result handling. They have not been regenerated for the current verifier and do not measure SMS delivery.</p>
     <p data-fill="scope">173 cases (152 everyday messages and 21 attacks) on three voices, <span class="mono">anna</span>, <span class="mono">alba</span> and <span class="mono">george</span>: 519 results, each scored on a word-for-word transcript of the audio. Two voices the API accepts but the docs don't list, <span class="mono">iris</span> and <span class="mono">reid</span>, fail the same bug cases, so the misreads come from shared text normalization rather than any one voice.</p>
     <div class="big">
       <div class="from"><strong data-fill="before">53%</strong><span>correct with plain TTS</span></div>
@@ -258,7 +259,7 @@ footer { color: var(--muted); font-size: .85rem; border-top: 1px solid var(--rul
       <li><h3>Match the screen</h3><p>Lays out right-to-left overrides as displayed, strips invisible characters and markup, and maps look-alike letters and digits.</p></li>
       <li><h3>Spell values out</h3><p>"₹1,50,000" becomes "one lakh fifty thousand rupees", and an OTP becomes "four eight two, nine one zero".</p></li>
       <li><h3>Verify the audio</h3><p>Transcribes what was actually spoken and checks every value against the text.</p></li>
-      <li><h3>Hold back</h3><p>If a value still can't be verified after a slower retry, it isn't spoken. The app sends an SMS instead.</p></li>
+      <li><h3>Hold back</h3><p>If a value still can't be verified after a slower retry, it is held back. Campaigns can send it through Twilio when SMS is configured, enabled and the recipient has consented. Delivery status is tracked separately.</p></li>
     </ol>
   </section>
 

@@ -92,7 +92,7 @@
   <section id="tab-campaign" role="tabpanel" aria-labelledby="t-campaign" hidden>
     <div class="intro">
       <h1>Check a whole campaign</h1>
-      <p>Every customer's message is spoken plain and with SafeSpeak before anyone is called. Anything SafeSpeak can't verify is held back and sent as an SMS instead.</p>
+      <p>Every customer's message is spoken plain and with SafeSpeak before anyone is called. Anything SafeSpeak can't verify is held back. Enable SMS below to send those messages through Twilio.</p>
     </div>
     <div class="card controls">
       <div class="row">
@@ -113,9 +113,13 @@
       </div>
       <div class="actions">
         <button id="k-run" class="primary">Check all</button>
+        <button id="k-refresh" type="button" hidden>Refresh delivery status</button>
         <a id="k-report" class="button" href="#" hidden>Download report (CSV)</a>
       </div>
       <p class="hint">CSV columns: name, phone, amount, balance, emi, due_date, otp, medicine, dose, schedule, reference.</p>
+      <label><input id="k-sms" type="checkbox" disabled> Send real SMS for held messages</label>
+      <p id="k-sms-status" role="status"></p>
+      <p>CSV recipients need <code>sms_to</code> in international format (such as +countrycode…) and <code>sms_consent=true</code>. The existing <code>phone</code> field is a business helpline. Demo rows have no SMS recipients. “Sent” means Twilio has sent it onward; only “delivered” confirms delivery.</p>
       <p id="k-error" class="error" hidden></p>
     </div>
     <div id="k-progress" class="progress" hidden><div class="bar"><i id="k-bar"></i></div><span id="k-count"></span></div>

@@ -9,3 +9,4 @@ pandas>=2.2
 fastapi>=0.115
 uvicorn>=0.30
 python-multipart>=0.0.9
+twilio>=9.0,<10
