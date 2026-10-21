@@ -38,7 +38,7 @@ function highlight(text, parts) {
 }
 
 const PILL = {
-  misread: ["bad", "Misread"], unclear: ["warn", "Check by ear"], correct: ["good", "Correct"],
+  misread: ["bad", "Misread"], unclear: ["warn", "Check by ear"], correct: ["good", "Correct"], not_checked: ["idle", "No values checked"],
   DO_NOT_SPEAK: ["bad", "Held back"], SPOKEN: ["good", "Verified"], SPOKEN_AFTER_RETRY: ["good", "Verified on retry"],
 };
 function pill(el, key) {
@@ -52,7 +52,7 @@ function pillHtml(key) {
 }
 
 function checksHtml(checks) {
-  if (!checks.length) return `<li><span class="mark-ok">✓</span><span>No numbers, codes or dates to check.</span></li>`;
+  if (!checks.length) return `<li><span class="mark-warn">—</span><span>No supported values detected. This reply was not verified.</span></li>`;
   return checks.map((c) => {
     const [m, cls] = c.status === "PASS" ? ["✓", "mark-ok"] : c.status === "FAIL" ? ["✗", "mark-bad"] : ["?", "mark-warn"];
     return `<li><span class="${cls}" aria-label="${esc(c.status)}">${m}</span><span><span class="val">${esc(c.value)}</span><span class="reason">${esc(c.reason)}</span></span></li>`;
@@ -224,7 +224,7 @@ function campaignRowHtml(r) {
   return `<tr>
     <td><div class="who">${esc(r.name || "(no name)")}</div><div class="text">${esc(r.text || r.error || "")}</div></td>
     <td>${plain}</td><td>${safe}</td>
-    <td><span class="pill ${act}">${esc(r.action)}</span></td></tr>`;
+    <td><span class="pill ${act}">${esc(r.action)}</span>${r.sms ? `<p>SMS: <strong>${esc(r.sms.status.replaceAll("_", " "))}</strong></p>${r.sms.error ? `<p class="error">${esc(r.sms.error)}</p>` : ""}` : "<p>SMS not requested</p>"}</td></tr>`;
 }
 
 function renderSummary(s) {
@@ -233,21 +233,40 @@ function renderSummary(s) {
     <div class="bad"><strong>${s.plain_misread} / ${s.checked}</strong><span>calls plain TTS would misread</span></div>
     <div class="bad"><strong>${s.plain_values_misread}</strong><span>values it would get wrong</span></div>
     <div class="good"><strong>${s.ready}</strong><span>ready to call with SafeSpeak</span></div>
-    <div class="warn"><strong>${s.held_back + (s.review || 0)}</strong><span>held back: ${s.held_back} sent as SMS, ${s.review || 0} with hidden characters to review</span></div>`;
+    <div class="warn"><strong>${s.held_back + (s.review || 0)}</strong><span>${s.held_back} held back; ${s.review || 0} need review</span></div>
+    <div><strong>${s.sms_delivered || 0}</strong><span>SMS delivered; ${s.sms_pending || 0} awaiting delivery confirmation, ${s.sms_failed || 0} failed or not sent</span></div>`;
   $("#k-summary").hidden = false;
+}
+
+// Retain the same request ID after a network failure or a page reload. A repeat
+// click for the same input returns the existing campaign instead of sending again.
+async function campaignRequestId(payload) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(payload)));
+  const fingerprint = Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, "0")).join("");
+  let previous = state.campaignRequest;
+  try { previous ||= JSON.parse(sessionStorage.getItem("readback-campaign-request")); } catch {}
+  if (!previous || previous.fingerprint !== fingerprint) {
+    previous = { fingerprint, id: crypto.randomUUID() };
+  }
+  state.campaignRequest = previous;
+  try { sessionStorage.setItem("readback-campaign-request", JSON.stringify(previous)); } catch {}
+  return previous.id;
 }
 
 async function runCampaign() {
   const btn = $("#k-run");
   btn.disabled = true;
   $("#k-report").hidden = true;
+  $("#k-refresh").hidden = true;
   showError($("#k-error"), null);
   try {
-    let view = await post("/api/campaigns", {
+    const payload = {
       template: state.templates[$("#k-template").value].text,
       rows: state.campaignRows,
       voice: $("#k-voice").value,
-    });
+      send_sms: $("#k-sms").checked,
+    };
+    let view = await post("/api/campaigns", { ...payload, request_id: await campaignRequestId(payload) });
     $("#k-progress").hidden = false;
     $("#k-table").hidden = false;
     while (true) {
@@ -255,12 +274,16 @@ async function runCampaign() {
       $("#k-count").textContent = `${view.done} of ${view.total} checked`;
       $("#k-table tbody").innerHTML = view.results.map(campaignRowHtml).join("");
       renderSummary(view.summary);
-      if (view.status === "done") break;
+      if (view.status !== "running") {
+        if (view.status === "interrupted") showError($("#k-error"), "This campaign was interrupted by a server restart. It will not resend automatically; review its report and Twilio before creating another campaign.");
+        break;
+      }
       await new Promise((r) => setTimeout(r, 1200));
       view = await api(`/api/campaigns/${view.id}`);
     }
     $("#k-report").dataset.id = view.id;
     $("#k-report").hidden = false;
+    $("#k-refresh").hidden = false;
   } catch (err) {
     showError($("#k-error"), err);
   } finally {
@@ -268,6 +291,13 @@ async function runCampaign() {
   }
 }
 $("#k-run").addEventListener("click", runCampaign);
+$("#k-refresh").addEventListener("click", async () => {
+  try {
+    const view = await api(`/api/campaigns/${$("#k-report").dataset.id}`);
+    $("#k-table tbody").innerHTML = view.results.map(campaignRowHtml).join("");
+    renderSummary(view.summary);
+  } catch (err) { showError($("#k-error"), err); }
+});
 $("#k-report").addEventListener("click", async (e) => {
   e.preventDefault();
   try {
@@ -347,7 +377,6 @@ async function startCall() {
         : { audio, rendered: text, greeting: text, safespeak: false };
       try {
         const r = await post("/api/call/check", body);
-        if (!r.checks.length) { li.querySelector(".check-note")?.remove(); return; }
         note(li, `<span class="note">What the caller heard: ${pillHtml(r.verdict)}</span><ul class="checks">${checksHtml(r.checks)}</ul>`);
       } catch (err) {
         note(li, `<span class="note">Couldn't check this reply: ${esc(err.message || err)}</span>`);
@@ -389,6 +418,7 @@ async function loadEvidence() {
     evidenceLoaded = true;
     const pct = (x) => `${Math.round(x * 100)}%`;
     $("#e-scope").textContent = `${e.cases} hard Indian cases × ${e.voices.length} voices (${e.voices.join(", ")}) = ${e.results} results, each scored on a word-for-word transcript of the audio. These misreads hit text the voice reads word for word, like an outbound call's opening line. The agent's own AI spells out values it looks up, but it copies digits it has already seen: a raw “₹10,00,000” in the opening line comes back as “ten zero rupees” in its follow-up answers too.`;
+    $("#e-scope").textContent += " Historical snapshot: these measurements predate the stricter field alignment and uncertain-result handling and have not been rerun for this revision.";
     $("#e-metrics").innerHTML = `
       <div class="bad"><strong>${pct(e.before)}</strong><span>correct with plain TTS</span></div>
       <div class="good"><strong>${pct(e.after)}</strong><span>correct or safely held back with SafeSpeak</span></div>
@@ -427,6 +457,9 @@ async function init() {
   state.templates = templates;
   state.customers = state.demo = customers;
   state.voices = cfg.voices;
+  $("#k-sms").disabled = !cfg.sms_available;
+  if (!cfg.sms_available) $("#k-sms").checked = false;
+  $("#k-sms-status").textContent = cfg.sms_available ? "Twilio configured. Enabling this sends real SMS for held messages." : "SMS unavailable. Configure Twilio and a public delivery callback URL on the server.";
   const tplIds = Object.keys(templates);
   for (const sel of ["#c-template", "#k-template", "#v-template"]) fillSelect($(sel), tplIds, (id) => id, (id) => templates[id].label, "emi");
   for (const sel of ["#c-customer", "#v-customer"]) fillSelect($(sel), customers, (c) => c.id, (c) => c.name, "1");

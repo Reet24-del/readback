@@ -1,6 +1,8 @@
 # Demo video script (under 3 minutes)
 
 **Before recording**
+- Rerun the campaign with the current verifier and narrate the counts actually shown. The numerical examples below are from the historical snapshot, before stricter field alignment; do not present them as fresh results.
+- For an SMS demonstration, configure Twilio and a public HTTPS callback using the README, add your own consenting recipient to the CSV, and enable SMS. Only held, untampered messages trigger a send. Show the provider status; say “delivered” only when that status arrives. Do not fabricate a failed check or a delivery for the recording.
 - Start the app: `.venv/bin/python -m uvicorn server.app:app --port 8000`, then open http://localhost:8000 in **Chrome**.
 - Run **Check by voice** once for Aarav (EMI reminder), and run the demo campaign once, so both respond instantly from cache.
 - Wear headphones for the live call. Record with QuickTime (File → New Screen Recording, microphone on for the voice-over).

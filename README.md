@@ -8,7 +8,7 @@ Then, when the caller asks "what's my balance?", the agent repeats the digits it
 
 **Readback is a tool for outbound reminder calls that say amounts, OTPs and dates right.** It checks every customer's message before you dial, fixes it with **SafeSpeak**, and checks the audio of every reply the agent speaks during the call.
 
-Built for AssemblyAI's *Voice hackathon week: Hack into speech* (17–24 Oct 2026).
+Built for AssemblyAI's *Voice hackathon week: Hack into speech* (October 2026).
 
 ## The app
 
@@ -19,7 +19,7 @@ Built for AssemblyAI's *Voice hackathon week: Hack into speech* (17–24 Oct 202
 | **Live call** | Place the call from the browser. The agent opens with the reminder and answers questions in real time. After every reply, Readback compares what the agent meant to say with what the caller actually heard. Toggle SafeSpeak to hear the difference. |
 | **Evidence** | The research behind it: 519 measured results and five bugs. |
 
-**Demo campaign** (12 customers, EMI reminder, voice `anna`): plain TTS would misread **11 of 12 calls (27 values)**. With SafeSpeak: **11 ready to call, 1 tampered record flagged for review, 0 misreads.**
+**Historical demo campaign** (12 customers, EMI reminder, voice `anna`): plain TTS misread **11 of 12 calls (27 values)**. The original checker reported **11 ready to call, 1 tampered record flagged for review, 0 misreads.** This predates the stricter field alignment and uncertain-result handling below; rerun before quoting current results.
 
 ### Run it
 
@@ -31,7 +31,35 @@ cp .env.example .env   # paste your ASSEMBLYAI_API_KEY into .env
 
 Open http://localhost:8000 in **Chrome** (the live call needs the microphone; use headphones). Checks cost a few cents and are cached; a live call costs about $0.075 a minute. To host it publicly, set `READBACK_PASSCODE` so only people with the passcode can spend your credits.
 
+### Real SMS fallback (Twilio)
+
+Campaign SMS is **off by default**. It sends the rendered written reminder only when SafeSpeak returns `DO_NOT_SPEAK`, the record has no critical tampering alert, and the operator selected **Send real SMS for held messages**. Successful voice checks and tampered records do not trigger SMS. Live browser calls currently show verification results; they do not trigger SMS.
+
+1. Create an SMS-capable Twilio Messaging Service with a sender, or use an SMS-capable Twilio number. Set these in `.env` (never in the browser or CSV):
+
+   ```dotenv
+   READBACK_PASSCODE=choose-a-long-private-passcode
+   READBACK_SMS_ENABLED=true
+   TWILIO_ACCOUNT_SID=AC...your-account-sid...
+   TWILIO_AUTH_TOKEN=your-auth-token
+   TWILIO_MESSAGING_SERVICE_SID=MG...your-service-sid...
+   # Alternatively leave the service SID empty and set TWILIO_FROM_NUMBER=+...
+   READBACK_SMS_STATUS_URL=https://your-public-host/api/sms/status
+   ```
+
+2. Deploy behind HTTPS or use a public HTTPS tunnel for local development. The callback URL must reach this server at `/api/sms/status`, without a query string. Readback attaches a per-message job ID and verifies callbacks with Twilio's signature and account SID. The callback uses Twilio authentication, not the browser passcode. Restart after configuring `.env`.
+3. Add CSV columns `sms_to` (the customer's full international number, starting `+`) and `sms_consent` (`true`, `yes`, or `1` only for customers who consented). **`phone` is the business helpline, never the recipient.** Demo rows deliberately have no SMS recipients. Keep the service's sender pool SMS-capable; trial accounts may require verified recipients and the destination must be enabled in Twilio.
+4. Upload the CSV, select **Send real SMS for held messages**, then **Check all**. The table shows `queued`, `sent`, `delivered`, `undelivered`, or `failed`, plus errors. Use **Refresh delivery status** or download the CSV for the latest callback status. `sent` is not delivery confirmation; only `delivered` is.
+
+The API requires a UUID `request_id` for SMS campaigns. Repeating the same ID and payload returns the original campaign; changing its payload gives HTTP 409. The UI retains that ID for unchanged input in the same browser tab, including reloads. A new tab/new ID starts a distinct campaign and can send again. Each campaign row also has a durable unique send attempt in SQLite. A timeout remains `unknown` and is **not automatically retried**, because Twilio may have accepted it. Check Twilio before any manual resend. Delivery callbacks may be delayed or absent; pending is never treated as delivered.
+
+Use one Uvicorn worker and persistent storage for `runs/campaigns/` and `runs/sms.sqlite3` (or `READBACK_SMS_DB`). Interrupted campaigns are recoverable by ID for inspection, but never automatically resumed. Keep both stores together when backing up or moving the app. The campaign files contain customer records; keep the data directory private. The SMS database stores message fingerprints and provider status, without message bodies or destination numbers.
+
+Offline integration tests use HTTPX's mock transport and signed callback fixtures, with no real send. For a live smoke test, use your own consenting recipient, a public callback URL, and an actual held message. Credentials and a real delivered SMS still need to be verified in your deployment.
+
 ## The research
+
+**Historical snapshot:** the committed results below predate the stricter verifier. They have not been regenerated with fresh AssemblyAI audio and do not establish the accuracy of this revision or Twilio delivery.
 
 AssemblyAI's TTS promises that "order numbers, prices, dates, and confirmation codes come out exactly as written." Readback tests that promise on what Indian voice agents read out every day: lakh/crore amounts, OTPs, PNRs, doses, DD/MM dates, and text that an attacker has tampered with.
 
@@ -42,7 +70,7 @@ AssemblyAI's TTS promises that "order numbers, prices, dates, and confirmation c
 |---|---|---|
 | Critical values correct (or safely held back) | **53%** | **99%** |
 | Misreads | **230** | **0** |
-| Refused to speak (couldn't verify, sends SMS instead) | – | 0 |
+| Refused to speak (couldn't verify; eligible for optional SMS) | – | 0 |
 | Needs an ear check (names and URLs transcribed differently) | 16 | 7 |
 
 Money 32% → 100% · codes 39% → 100% · phone 57% → 100% · dates 60% → 100% · attacks 32% → 100% · medical doses were already 100%. The three voices score within one point of each other, and the two voices the API accepts but the docs don't list (`iris`, `reid`) fail the same 18 of 18 bug cases. The misreads come from shared text normalization, not from any one voice.
@@ -80,8 +108,8 @@ case (text + the value that must survive)
 1. **Sanitize** so the text matches what the screen shows: apply bidi overrides the way the screen does, strip invisible characters, map look-alike letters and non-ASCII digits, remove SSML and markdown.
 2. **Find values:** money (₹/Rs./INR, lakh/crore/L), doses and units, prescription shorthand (1-0-1, BD, TDS), phone numbers, OTPs/PNRs, alphanumeric codes, dates, times, emails, UPI IDs, URLs, abbreviations.
 3. **Spell them out** in plain words, so the TTS normalizer never has to guess: "₹1,50,000" → "one lakh fifty thousand rupees", "03/04/2026" → "the third of April, twenty twenty six", "90000" → "nine double zero double zero".
-4. **Verify:** speak, transcribe, check every value.
-5. **Fall back:** re-say failed values one word at a time. If a value still fails, return `DO_NOT_SPEAK` so the app sends it as an SMS instead.
+4. **Verify:** speak, transcribe, and bind each value to its surrounding words. A correct amount elsewhere cannot make the wrong field pass. Already-spelled numeric values in follow-up replies are checked too. Missing or ambiguous context is `UNCLEAR`; replies with no supported values show **No values checked**.
+5. **Fall back:** re-say failed **or uncertain** values one word at a time. If verification still does not pass, return `DO_NOT_SPEAK`. Campaigns can then send optional Twilio SMS with explicit delivery tracking.
 
 ### Research tools
 
@@ -122,6 +150,8 @@ Everything the API returns is cached by content in `.cache/`, so re-running or r
 | `server/app.py` | The product's API: preview, voice check, campaigns, live-call token/config/tool/check |
 | `server/templates.py` | Reminder templates, demo customers, and the instant risk check |
 | `server/campaign.py` | Checks a customer list four at a time; CSV report |
+| `server/sms.py` | Twilio REST sends, durable attempt deduplication and signed delivery callbacks |
+| `readback/verification.py` | Aligns each value with its own transcript context |
 | `server/static/` | The web app (plain HTML/CSS/JS); `call.js` runs the live call over the Voice Agent API |
 | `readback/tts/voice_agent.py` | Word-for-word TTS from the Voice Agent API `greeting`, with word timings, a cache, and always `session.end` |
 | `readback/stt.py` | Verbatim and formatted transcription, with retries and a cache |
@@ -141,3 +171,4 @@ Everything the API returns is cached by content in `.cache/`, so re-running or r
 - There's no Indian English voice yet, so these tests use en-GB and en-US voices.
 - The live call needs a microphone; it was tested end to end with a scripted client (`experiments/call_probe.py`) and needs a person for the real conversation.
 - The LLM judge needs LLM Gateway access, which isn't on the free plan. Without it, cases the rules can't decide stay UNCLEAR.
+- Field alignment is deliberately conservative: rewritten or ambiguous surrounding words require review, even when the number may be right. Live-call checks happen after the reply plays and compare the reply text to its audio, not the customer's underlying account record.

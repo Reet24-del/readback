@@ -13,10 +13,11 @@ import hashlib
 import os
 import re
 from pathlib import Path
+from uuid import UUID
 
 import httpx
 from fastapi import FastAPI, File, HTTPException, Request, UploadFile
-from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -26,6 +27,7 @@ from readback.safespeak import check_raw, prepare, speak, speak_raw, verify
 from readback.stt import cached_transcribe
 from readback.tts import VOICES, Clip, VoiceAgentTTS
 from server import campaign as campaign_lib
+from server import sms
 from server.templates import FIELDS, TEMPLATES, TemplateError, load_customers, preview, render
 
 STATIC = Path(__file__).parent / "static"
@@ -41,7 +43,7 @@ CAMPAIGNS: dict[str, campaign_lib.Campaign] = {}
 async def passcode_gate(request: Request, call_next):
     code = os.environ.get("READBACK_PASSCODE")
     path = request.url.path
-    if code and path.startswith("/api/") and path not in ("/api/health", "/api/config") and request.headers.get("x-passcode") != code:
+    if code and path.startswith("/api/") and path not in ("/api/health", "/api/config", "/api/sms/status") and request.headers.get("x-passcode") != code:
         return JSONResponse({"detail": "Enter the demo passcode to use this app."}, status_code=401)
     return await call_next(request)
 
@@ -54,8 +56,10 @@ def audio_url(voice: str, text: str) -> str:
 
 
 def verdict(checks: list[dict]) -> str:
+    if not checks:
+        return "not_checked"
     statuses = {c["status"] for c in checks}
-    return "misread" if "FAIL" in statuses else "unclear" if "UNCLEAR" in statuses else "correct"
+    return "misread" if "FAIL" in statuses else "correct" if statuses == {"PASS"} else "unclear"
 
 
 def checks_list(plan, verdicts: dict) -> list[dict]:
@@ -113,7 +117,20 @@ def health() -> dict:
 
 @app.get("/api/config")
 def config() -> dict:
-    return {"passcode_required": bool(os.environ.get("READBACK_PASSCODE")), "voices": ALL_VOICES, "default_voice": "anna"}
+    return {"passcode_required": bool(os.environ.get("READBACK_PASSCODE")), "voices": ALL_VOICES, "default_voice": "anna",
+            "sms_available": sms.configuration_error() is None}
+
+
+@app.post("/api/sms/status")
+async def sms_status(request: Request, job: str) -> Response:
+    # This endpoint uses Twilio's signature, never the browser's passcode.
+    try:
+        sms.accept_callback(job, await request.form(), request.headers.get("x-twilio-signature", ""))
+    except PermissionError:
+        raise HTTPException(403, "Invalid Twilio signature") from None
+    except ValueError:
+        raise HTTPException(400, "Invalid SMS delivery update") from None
+    return Response(status_code=204)
 
 
 @app.get("/api/templates")
@@ -188,19 +205,38 @@ class CampaignIn(BaseModel):
     template: str = Field(max_length=1000)
     rows: list[dict]
     voice: str = "anna"
+    send_sms: bool = False
+    request_id: UUID | None = None
 
 
 @app.post("/api/campaigns")
 async def start_campaign(body: CampaignIn) -> dict:
     if not body.rows or len(body.rows) > MAX_ROWS:
         raise HTTPException(400, f"send between 1 and {MAX_ROWS} customers")
-    c = campaign_lib.Campaign(template=body.template, voice=check_voice(body.voice), rows=body.rows)
+    if body.send_sms:
+        if not body.request_id:
+            raise HTTPException(400, "request_id is required for SMS campaigns")
+        if error := sms.configuration_error():
+            raise HTTPException(400, error)
+    if body.request_id:
+        cid = body.request_id.hex
+        existing = CAMPAIGNS.get(cid) or campaign_lib.load(cid)
+        if existing:
+            if (existing.template, existing.voice, existing.rows, existing.send_sms) != (body.template, body.voice, body.rows, body.send_sms):
+                raise HTTPException(409, "request_id already used for a different campaign")
+            return existing.view()
+    c = campaign_lib.Campaign(template=body.template, voice=check_voice(body.voice), rows=body.rows, send_sms=body.send_sms)
+    if body.request_id:
+        c.id = body.request_id.hex
+    c.save()
     CAMPAIGNS[c.id] = c
     asyncio.create_task(campaign_lib.run(c, lambda text, voice: check_message(text, voice)))
     return c.view()
 
 
 def get_campaign(cid: str) -> campaign_lib.Campaign:
+    if cid not in CAMPAIGNS and (saved := campaign_lib.load(cid)):
+        CAMPAIGNS[cid] = saved
     if cid not in CAMPAIGNS:
         raise HTTPException(404, "no such campaign")
     return CAMPAIGNS[cid]

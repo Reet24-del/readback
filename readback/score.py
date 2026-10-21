@@ -75,6 +75,8 @@ def aligned_span(row: dict, spans: list[NumberSpan]) -> NumberSpan | None:
 def check_number(row: dict, heard: str) -> Verdict:
     want = row["value"]["value"]
     spans = find_numbers(heard)
+    if row.get("scoped") and len(spans) > 1:
+        return Verdict(UNCLEAR, "value", "multiple readings in this value's position; manual review required")
     if not any(_eq(x.value, want) for x in spans):
         # "two point five rupees crore": right number, currency word in the wrong place.
         without_cur = re.sub(r"\b(rupees?|dollars?|rs)\b", " ", heard, flags=re.I)
@@ -132,7 +134,8 @@ def check_digits(row: dict, heard: str) -> Verdict:
         return Verdict(FAIL, "digits", f"read as an amount ({s.text!r}) instead of digit by digit", s.text)
     if s is not None and s.digits == want:
         return Verdict(PASS, "digits", f"heard {want}", s.text)
-    if want in "".join(x.digits or "" for x in spans):
+    combined = "".join(x.digits or "" for x in spans)
+    if (want == combined if row.get("scoped") else want in combined):
         return Verdict(PASS, "digits", f"heard {want} across {len(spans)} groups")
     if s is not None:
         return Verdict(FAIL, "digits", f"heard {s.digits or s.text!r}, expected {want}", s.text)
@@ -192,7 +195,8 @@ def check_code(row: dict, heard: str) -> Verdict:
     want = re.sub(r"[^A-Z0-9]", "", row["value"]["chars"].upper())
     norm = lambda s: s.replace("O", "0")  # spoken "oh" is ambiguous between O and 0
     windows = spelled_windows(heard)
-    if any(norm(want) in norm(w) for w in windows):
+    exact = len(windows) == 1 and norm(want) == norm(windows[0])
+    if (exact if row.get("scoped") else any(norm(want) in norm(w) for w in windows)):
         return Verdict(PASS, "chars", f"heard {want}")
     if not windows:
         return Verdict(UNCLEAR, "chars", "no spelled-out code found in the transcript")
@@ -341,8 +345,13 @@ def score_row(row: dict, use_llm: bool = True) -> Verdict:
     if row["value"].get("unit") == "INR":
         heard = re.sub(r"\b(?:pays|paisa|pice)\b", "paise", heard, flags=re.I)  # common STT spellings of "paise"
     H = tokens(heard)
+    # A value belonging to another field is not evidence for this one.
+    if not row.get("scoped") and row["value"]["type"] in ("amount", "number", "dose"):
+        spans = find_numbers(heard)
+        if len(spans) > 1 and aligned_span(row, spans) is not None:
+            return CHECKERS[row["value"]["type"]](row, heard)
     for a in row["accept"]:
-        if has_phrase(H, tokens(a)):
+        if (H == tokens(a) if row.get("scoped") else has_phrase(H, tokens(a))):
             return Verdict(PASS, "accept", f"heard {a!r}", a)
 
     verdict = CHECKERS[row["value"]["type"]](row, heard)

@@ -29,8 +29,10 @@ async def fake_check(text: str, voice: str) -> dict:
 
 
 @pytest.fixture()
-def client(monkeypatch):
+def client(monkeypatch, tmp_path):
     monkeypatch.setattr(srv, "check_message", fake_check)
+    monkeypatch.setattr(srv.campaign_lib, "CAMPAIGN_DIR", tmp_path / "campaigns")
+    monkeypatch.setattr(srv, "CAMPAIGNS", {})
     monkeypatch.delenv("READBACK_PASSCODE", raising=False)
     with TestClient(srv.app) as c:
         yield c
@@ -139,6 +141,15 @@ def test_call_token_and_check(client, monkeypatch):
     r = client.post("/api/call/check", json=body).json()
     assert r["verdict"] == "misread"
     assert client.post("/api/call/check", json={**body, "audio": "!!"}).status_code == 400
+
+    heard["text"] = "Your outstanding balance is ten rupees."
+    followup = {**body, "rendered": "Your outstanding balance is ten lakh rupees.",
+                "greeting": "Your outstanding balance is ten lakh rupees."}
+    result = client.post("/api/call/check", json=followup).json()
+    assert result["verdict"] == "misread" and len(result["checks"]) == 1
+    heard["text"] = "Welcome back."
+    result = client.post("/api/call/check", json={**body, "rendered": "Welcome back.", "greeting": "Welcome back."}).json()
+    assert result["verdict"] == "not_checked"
 
 
 def test_audio_keys_are_validated(client):
